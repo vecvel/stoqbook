@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: stoqbook-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stoqbook_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stoqbook_password}
+      POSTGRES_DB: ${POSTGRES_DB:-stoqbook_db}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - stoqbook_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-stoqbook_user} -d ${POSTGRES_DB:-stoqbook_db}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stoqbook-web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-stoqbook_user}:${POSTGRES_PASSWORD:-stoqbook_password}@db:5432/${POSTGRES_DB:-stoqbook_db}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NODE_ENV: production
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - full
+
+volumes:
+  stoqbook_pgdata:

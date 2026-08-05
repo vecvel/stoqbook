@@ -1,0 +1,370 @@
+/* ==========================================================================
+   StoqBook — globals.css
+   Single source of truth for colour, radius, typography and surface tokens.
+   Rules enforced here:
+     - Brand palette is exactly four colours (bark / copper / sage / parchment)
+     - No gradients anywhere
+     - Radius vocabulary is only `rounded-xs` and `rounded-full`
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+/* Supplies the animate-in / slide-in / fade-in utilities the overlay
+   primitives (dialog, dropdown, popover, sheet, tooltip) rely on. */
+@plugin "tailwindcss-animate";
+
+/* --------------------------------------------------------------------------
+   1. BRAND PALETTE
+   #4B352A  bark        hsl(20  28% 23%)
+   #CA7842  copper      hsl(24  56% 53%)
+   #B2CD9C  sage        hsl(93  33% 71%)
+   #F0F2BD  parchment   hsl(62  67% 85%)
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* Raw brand values */
+  --bark: 20 28% 23%;
+  --bark-soft: 20 22% 32%;
+  --bark-muted: 20 14% 46%;
+  --copper: 24 56% 53%;
+  --copper-deep: 24 58% 44%;
+  --sage: 93 33% 71%;
+  --sage-deep: 93 30% 46%;
+  --parchment: 62 67% 85%;
+  --parchment-soft: 60 48% 93%;
+
+  /* Semantic surfaces */
+  --background: 48 30% 98%;
+  --foreground: 20 28% 23%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 20 28% 23%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 28% 23%;
+
+  --primary: 20 28% 23%;
+  --primary-foreground: 60 48% 96%;
+
+  --secondary: 48 26% 94%;
+  --secondary-foreground: 20 28% 23%;
+
+  --muted: 45 20% 95%;
+  --muted-foreground: 20 12% 45%;
+
+  --accent: 24 56% 53%;
+  --accent-foreground: 60 48% 97%;
+
+  --destructive: 4 62% 48%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 93 30% 40%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 24 58% 44%;
+  --warning-foreground: 0 0% 100%;
+
+  --info: 20 22% 32%;
+  --info-foreground: 60 48% 96%;
+
+  --border: 40 16% 87%;
+  --input: 40 16% 87%;
+  --ring: 24 56% 53%;
+
+  /* Navigation shell */
+  --shell: 20 28% 23%;
+  --shell-foreground: 60 40% 92%;
+  --shell-muted: 60 20% 78%;
+  --shell-border: 20 18% 34%;
+  --shell-active: 62 67% 85%;
+  --shell-active-foreground: 20 28% 23%;
+
+  /* Charts — brand-derived, categorical, no gradients */
+  --chart-1: 24 56% 53%;
+  --chart-2: 93 30% 46%;
+  --chart-3: 20 28% 23%;
+  --chart-4: 24 40% 70%;
+  --chart-5: 93 24% 62%;
+  --chart-6: 20 14% 56%;
+
+  /* The only two radii in the system */
+  --radius-xs: 2px;
+}
+
+.dark {
+  --background: 20 18% 10%;
+  --foreground: 60 30% 92%;
+
+  --card: 20 16% 13%;
+  --card-foreground: 60 30% 92%;
+
+  --popover: 20 16% 13%;
+  --popover-foreground: 60 30% 92%;
+
+  --primary: 62 60% 84%;
+  --primary-foreground: 20 28% 18%;
+
+  --secondary: 20 12% 18%;
+  --secondary-foreground: 60 30% 92%;
+
+  --muted: 20 10% 18%;
+  --muted-foreground: 40 10% 65%;
+
+  --accent: 24 56% 56%;
+  --accent-foreground: 20 28% 14%;
+
+  --destructive: 4 58% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 93 30% 52%;
+  --success-foreground: 20 28% 14%;
+
+  --warning: 24 52% 56%;
+  --warning-foreground: 20 28% 14%;
+
+  --info: 60 20% 78%;
+  --info-foreground: 20 28% 18%;
+
+  --border: 20 10% 24%;
+  --input: 20 10% 24%;
+  --ring: 24 56% 56%;
+
+  --shell: 20 20% 8%;
+  --shell-foreground: 60 26% 88%;
+  --shell-muted: 40 10% 62%;
+  --shell-border: 20 10% 22%;
+  --shell-active: 24 56% 53%;
+  --shell-active-foreground: 20 28% 14%;
+}
+
+/* --------------------------------------------------------------------------
+   2. TAILWIND THEME MAPPING
+   -------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Brand aliases — use these when a token needs to be literally on-brand */
+  --color-bark: hsl(var(--bark));
+  --color-bark-soft: hsl(var(--bark-soft));
+  --color-bark-muted: hsl(var(--bark-muted));
+  --color-copper: hsl(var(--copper));
+  --color-copper-deep: hsl(var(--copper-deep));
+  --color-sage: hsl(var(--sage));
+  --color-sage-deep: hsl(var(--sage-deep));
+  --color-parchment: hsl(var(--parchment));
+  --color-parchment-soft: hsl(var(--parchment-soft));
+
+  /* Application shell */
+  --color-shell: hsl(var(--shell));
+  --color-shell-foreground: hsl(var(--shell-foreground));
+  --color-shell-muted: hsl(var(--shell-muted));
+  --color-shell-border: hsl(var(--shell-border));
+  --color-shell-active: hsl(var(--shell-active));
+  --color-shell-active-foreground: hsl(var(--shell-active-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-6: hsl(var(--chart-6));
+
+  /* Radius: only xs and full exist. sm/md/lg/xl deliberately collapse to xs so
+     any stray shadcn class still renders on-system. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. BASE
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scrollbar-gutter: stable;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+  }
+
+  /* Numeric alignment for every table cell and money figure. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight text-foreground;
+  }
+
+  :focus-visible,
+  :focus {
+    @apply outline-none ring-0 ring-offset-0;
+    box-shadow: none !important;
+  }
+
+  /* Native select chevron, tokenised */
+  select:not([data-slot]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23847a70' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 0.95em;
+    padding-right: 2rem;
+  }
+
+  /* Radix scroll-lock must not shift the layout. */
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. SHARED UTILITIES
+   Centralised so pages never re-invent spacing / surface treatments.
+   -------------------------------------------------------------------------- */
+
+@layer utilities {
+  /* Standard content surface: flat, bordered, no shadow stack, no gradient. */
+  .surface {
+    @apply bg-card text-card-foreground border border-border rounded-xs;
+  }
+
+  .surface-muted {
+    @apply bg-muted/60 border border-border rounded-xs;
+  }
+
+  /* Page rhythm */
+  .page {
+    @apply flex flex-col gap-5;
+  }
+
+  .section-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  /* Definition rows used across detail views */
+  .field-label {
+    @apply text-xs font-medium uppercase tracking-wide text-muted-foreground;
+  }
+
+  .field-value {
+    @apply text-sm text-foreground;
+  }
+
+  /* Thin, unobtrusive scrollbars */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--bark-muted) / 0.35) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar,
+  .scrollbar-thin *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track,
+  .scrollbar-thin *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  .scrollbar-thin *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--bark-muted) / 0.3);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover,
+  .scrollbar-thin *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--bark-muted) / 0.55);
+  }
+
+  /* Print: reports and receipts */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    body {
+      background: #fff;
+    }
+  }
+
+  .print-only {
+    display: none;
+  }
+}
+
+/* Receipt / thermal print sizing (80mm) */
+@media print {
+  @page {
+    margin: 6mm;
+  }
+  .receipt-80 {
+    width: 72mm;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+}
