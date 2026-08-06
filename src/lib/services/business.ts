@@ -45,16 +45,32 @@ import { provisionSettings } from "./settings";
  * transaction (02-business-structure.md § Business Setup Flow).
  */
 
+function isUndefinedTableError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: string; message?: string };
+  return err.code === "42P01" || (Boolean(err.message) && err.message!.includes("does not exist"));
+}
+
 /** True when this installation has not been set up yet. */
 export async function isInstalled(): Promise<boolean> {
-  const [row] = await db.select({ id: tenants.id }).from(tenants).limit(1);
-  return Boolean(row);
+  try {
+    const [row] = await db.select({ id: tenants.id }).from(tenants).limit(1);
+    return Boolean(row);
+  } catch (error) {
+    if (isUndefinedTableError(error)) return false;
+    throw error;
+  }
 }
 
 /** The single business row, or null before setup. */
 export async function getBusiness() {
-  const [row] = await db.select().from(tenants).limit(1);
-  return row ?? null;
+  try {
+    const [row] = await db.select().from(tenants).limit(1);
+    return row ?? null;
+  } catch (error) {
+    if (isUndefinedTableError(error)) return null;
+    throw error;
+  }
 }
 
 export interface SetupBusinessInput {
