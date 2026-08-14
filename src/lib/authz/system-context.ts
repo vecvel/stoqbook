@@ -1,10 +1,10 @@
 import "server-only";
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   organizations,
   rolePermissions,
   roles,
@@ -57,10 +57,10 @@ export async function buildSystemContext(
     .where(eq(userRoles.user_id, user.id));
 
   const assignedRoles = roleRows.map((r) => r.role).filter((r) => !r.archived);
-  const isOwner = assignedRoles.some((r) => r.is_owner);
+  const isSuperAdmin = assignedRoles.some((r) => r.is_super_admin || r.slug === "super_admin");
 
   let permissions: Set<string>;
-  if (isOwner) {
+  if (isSuperAdmin) {
     permissions = new Set(ALL_PERMISSION_KEYS);
   } else if (assignedRoles.length === 0) {
     permissions = new Set();
@@ -77,24 +77,26 @@ export async function buildSystemContext(
     permissions = new Set(grants.map((g) => g.key));
   }
 
-  const stores = await db
+  const storesRows = await db
     .select()
-    .from(branches)
+    .from(stores)
     .where(
       and(
-        eq(branches.tenant_id, businessId),
-        eq(branches.is_active, true),
-        isNull(branches.deleted_at),
+        eq(stores.tenant_id, businessId),
+        eq(stores.is_active, true),
+        isNull(stores.deleted_at),
       ),
     );
 
-  /* Background work is not "in" a store, so the default is used where one is
-     needed — a store-scoped report still honours its own saved filter. */
-  const activeStore = stores.find((s) => s.is_default) ?? stores[0] ?? null;
+  /* Background work is not "in" a store; use the first available store where
+     one is needed — a store-scoped report still honours its own saved filter. */
+  const activeStore = storesRows[0] ?? null;
+
+
 
   const entitlements =
     business.status === "active"
-      ? await resolveEntitlements(businessId)
+      ? await resolveEntitlements(businessId, activeStore?.id ?? null, isSuperAdmin)
       : UNLICENSED;
 
   return {
@@ -105,7 +107,7 @@ export async function buildSystemContext(
       token_hash: "system",
       tenant_id: businessId,
       user_id: user.id,
-      active_branch_id: activeStore?.id ?? null,
+      active_store_id: activeStore?.id ?? null,
       ip_address: null,
       user_agent: null,
       expires_at: new Date(Date.now() + 3_600_000),
@@ -120,13 +122,13 @@ export async function buildSystemContext(
     roles: assignedRoles,
     permissions,
     entitlements,
-    stores,
+    stores: storesRows,
     activeStore,
-    isOwner,
+    isSuperAdmin,
   };
 }
 
-/** The requested user when they are still usable; otherwise the Owner. */
+/** The requested user when they are still usable; otherwise the Super Admin. */
 async function resolveActor(businessId: string, actAsUserId: string | null) {
   if (actAsUserId) {
     const [candidate] = await db
@@ -144,7 +146,7 @@ async function resolveActor(businessId: string, actAsUserId: string | null) {
     if (candidate) return candidate;
   }
 
-  const [owner] = await db
+  const [superAdmin] = await db
     .select({ user: users })
     .from(users)
     .innerJoin(userRoles, eq(userRoles.user_id, users.id))
@@ -152,16 +154,16 @@ async function resolveActor(businessId: string, actAsUserId: string | null) {
     .where(
       and(
         eq(users.tenant_id, businessId),
-        eq(roles.is_owner, true),
+        sql`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin')`,
         isNull(users.deleted_at),
       ),
     )
     .limit(1);
 
-  if (!owner) {
+  if (!superAdmin) {
     throw NotFoundError(
-      "This business has no owner account, so background work cannot run.",
+      "This business has no super admin account, so background work cannot run.",
     );
   }
-  return owner.user;
+  return superAdmin.user;
 }

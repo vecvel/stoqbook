@@ -64,8 +64,8 @@ export default async function RoleDetailPage({
         ]}
         actions={
           <>
-            {role.is_owner ? (
-              <Badge variant="soft-accent">Owner</Badge>
+            {role.is_super_admin || role.slug === "super_admin" ? (
+              <Badge variant="soft-accent">Super Admin</Badge>
             ) : role.is_system ? (
               <Badge variant="soft-neutral">Provisioned</Badge>
             ) : (
@@ -74,7 +74,7 @@ export default async function RoleDetailPage({
             <RoleActions
               roleId={id}
               roleName={role.name}
-              isOwner={role.is_owner}
+              isSuperAdmin={role.is_super_admin || role.slug === "super_admin"}
               memberCount={members.length}
             />
           </>
@@ -90,7 +90,7 @@ export default async function RoleDetailPage({
             {members.map((member) => (
               <li key={member.id}>
                 <Link
-                  href={`/employees/${member.id}`}
+                   href={`/employees/${member.id}`}
                   className="flex items-center gap-2 rounded-xs border border-border px-2 py-1 text-xs transition-colors hover:bg-muted"
                 >
                   <span className="flex size-5 items-center justify-center rounded-full bg-bark text-[9px] font-semibold text-parchment">
@@ -112,7 +112,7 @@ export default async function RoleDetailPage({
           id: role.id,
           name: role.name,
           description: role.description ?? "",
-          isOwner: role.is_owner,
+          isSuperAdmin: Boolean(role.is_super_admin || role.slug === "super_admin"),
           isSystem: role.is_system,
           granted: granted.map((g) => g.key),
         }}

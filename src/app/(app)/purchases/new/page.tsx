@@ -78,7 +78,7 @@ export default async function NewPurchaseOrderPage() {
   }
 
   return (
-    <div className="page max-w-6xl">
+    <div className="page">
       <PageHeader
         title="New purchase order"
         description="Creating an order does not change stock. Post a goods receipt when the delivery arrives."

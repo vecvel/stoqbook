@@ -90,7 +90,7 @@ export default async function NotificationsPage({
   };
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Notifications"
         description={

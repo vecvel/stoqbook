@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       status: purchaseOrders.status,
       approval_status: purchaseOrders.approval_status,
       supplier_id: purchaseOrders.supplier_id,
-      branch_id: purchaseOrders.branch_id,
+      store_id: purchaseOrders.store_id,
       warehouse_id: purchaseOrders.warehouse_id,
       subtotal: purchaseOrders.subtotal,
       tax_amount: purchaseOrders.tax_amount,
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       status: purchaseOrders.status,
       approval: purchaseOrders.approval_status,
       supplier: purchaseOrders.supplier_id,
-      branch: purchaseOrders.branch_id,
+      store: purchaseOrders.store_id,
     },
   });
 }

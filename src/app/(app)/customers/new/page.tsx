@@ -31,7 +31,7 @@ export default async function NewCustomerPage() {
   );
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="New customer"
         breadcrumbs={[

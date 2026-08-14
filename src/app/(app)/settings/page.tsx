@@ -30,7 +30,7 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Settings"
         description="Organisation profile and business-wide defaults. Each module contributes its own settings automatically."

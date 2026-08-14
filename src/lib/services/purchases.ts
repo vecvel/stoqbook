@@ -124,7 +124,7 @@ export async function createPurchaseOrder(
       .insert(purchaseOrders)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         warehouse_id: input.warehouseId,
         supplier_id: supplier.id,
         order_number: orderNumber,
@@ -448,7 +448,7 @@ export async function receiveGoods(
     const byId = new Map(items.map((i) => [i.id, i]));
 
     const receiptNumber = await nextNumber(ctx.business.id, "goods_receipt", {
-      storeId: order.branch_id,
+      storeId: order.store_id,
       client: tx,
     });
 
@@ -502,7 +502,7 @@ export async function receiveGoods(
       .insert(goodsReceipts)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: order.branch_id,
+        store_id: order.store_id,
         warehouse_id: order.warehouse_id,
         order_id: order.id,
         supplier_id: order.supplier_id,
@@ -574,7 +574,7 @@ export async function receiveGoods(
       if (isPositive(received)) {
         movements.push({
           productId: p.item.product_id,
-          storeId: order.branch_id,
+          storeId: order.store_id,
           warehouseId: order.warehouse_id,
           type: "purchase",
           quantity: received,
@@ -590,7 +590,7 @@ export async function receiveGoods(
       if (isPositive(rejected)) {
         movements.push({
           productId: p.item.product_id,
-          storeId: order.branch_id,
+          storeId: order.store_id,
           warehouseId: order.warehouse_id,
           type: "purchase",
           state: "pending_inspection",
@@ -715,7 +715,7 @@ export async function recordPurchaseInvoice(
       .insert(purchaseInvoices)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         supplier_id: input.supplierId,
         order_id: input.orderId ?? null,
         receipt_id: input.receiptId ?? null,
@@ -825,7 +825,7 @@ export async function recordSupplierPayment(
       .insert(supplierPayments)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         supplier_id: input.supplierId,
         invoice_id: invoice?.id ?? null,
         payment_number: paymentNumber,
@@ -921,7 +921,7 @@ export async function createPurchaseReturn(
       .insert(purchaseReturns)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         warehouse_id: input.warehouseId,
         supplier_id: input.supplierId,
         order_id: input.orderId ?? null,

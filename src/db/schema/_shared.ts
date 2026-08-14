@@ -4,15 +4,15 @@
  * Conventions (06-database-architecture.md):
  *   - tables are plural, columns are snake_case
  *   - every table has id / created_at / updated_at
- *   - business-owned tables carry tenant_id; store-aware carry branch_id
+ *   - business-owned tables carry tenant_id; store-aware carry store_id
  *   - money and quantity are numeric(18,4) — never floats
  *   - soft delete uses deleted_at; financial history is never deleted
  *
- * On `tenant_id` / `branch_id`:
+ * On `tenant_id` / `store_id`:
  * StoqBook serves ONE business per installation. The spec deliberately keeps
  * these structural column names so the schema stays forward-compatible if
  * multiple businesses on one server are ever needed. `tenant_id` always holds
- * the single installed business's id, and `branch_id` identifies a store.
+ * the single installed business's id, and `store_id` identifies a store.
  * Everything above the database layer speaks "business" and "store".
  */
 import { numeric, pgEnum, timestamp, uuid } from "drizzle-orm/pg-core";

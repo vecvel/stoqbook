@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatGrid, StatTile } from "@/components/shared/stat-tile";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { db } from "@/db";
-import { attendance, branches, shifts, users } from "@/db/schema";
+import { attendance, stores, shifts, users } from "@/db/schema";
 import { parseListQuery } from "@/lib/api/query";
 import { hasPermission } from "@/lib/authz/context";
 import { requirePermission } from "@/lib/authz/guard";
@@ -75,12 +75,12 @@ export default async function AttendancePage({
         employeeName: users.full_name,
         employeeCode: users.employee_code,
         shiftName: shifts.name,
-        storeName: branches.name,
+        storeName: stores.name,
       })
       .from(attendance)
       .innerJoin(users, eq(users.id, attendance.user_id))
       .leftJoin(shifts, eq(shifts.id, attendance.shift_id))
-      .leftJoin(branches, eq(branches.id, attendance.branch_id))
+      .leftJoin(stores, eq(stores.id, attendance.store_id))
       .where(where)
       .orderBy(desc(attendance.work_date), asc(users.full_name))
       .limit(query.limit)

@@ -28,7 +28,7 @@ import {
   timestamps,
 } from "./_shared";
 import { tenants } from "./admin";
-import { branches } from "./organization";
+import { stores } from "./organization";
 
 /* ------------------------------------------------------------------------- */
 /* Categories — unlimited nesting                                            */
@@ -236,9 +236,9 @@ export const productOptions = pgTable(
   (t) => [index("product_options_product_idx").on(t.product_id)],
 );
 
-/** Branch-level price overrides — used when a branch deviates from base price. */
+/** Store-level price overrides — used when a store deviates from base price. */
 export const productStorePrices = pgTable(
-  "product_branch_prices",
+  "product_store_prices",
   {
     id: pk(),
     tenant_id: uuid("tenant_id")
@@ -247,14 +247,14 @@ export const productStorePrices = pgTable(
     product_id: uuid("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
     selling_price: money("selling_price").notNull(),
     wholesale_price: money("wholesale_price"),
     ...timestamps,
   },
   (t) => [
-    uniqueIndex("product_branch_prices_key").on(t.product_id, t.branch_id),
+    uniqueIndex("product_store_prices_key").on(t.product_id, t.store_id),
   ],
 );

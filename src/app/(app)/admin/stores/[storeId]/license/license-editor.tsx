@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { ActionResult } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 
-import { changePlan, saveLicenseOverrides, updateLicense } from "../actions";
+import { changePlan, saveLicenseOverrides, updateLicense } from "../../../actions";
 
 export interface PlanOption {
   id: string;
@@ -60,6 +60,7 @@ export function LicenseEditor({
   features,
   effectiveModules,
   effectiveFeatures,
+  storeId,
 }: {
   licence: LicenceView | null;
   plans: PlanOption[];
@@ -67,6 +68,7 @@ export function LicenseEditor({
   features: { slug: string; name: string; moduleSlug: string }[];
   effectiveModules: string[];
   effectiveFeatures: string[];
+  storeId: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -74,11 +76,11 @@ export function LicenseEditor({
         <UpdateLicenceForm licence={licence} />
       ) : (
         <p className="rounded-xs border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
-          This installation has no licence. Issue one below to restore access.
+          This store has no licence. Issue one below to restore access.
         </p>
       )}
 
-      <ChangePlanForm plans={plans} currentPlanId={licence?.planId} />
+      <ChangePlanForm plans={plans} currentPlanId={licence?.planId} storeId={storeId} />
 
       {licence ? (
         <OverrideForm
@@ -177,9 +179,11 @@ function UpdateLicenceForm({ licence }: { licence: LicenceView }) {
 function ChangePlanForm({
   plans,
   currentPlanId,
+  storeId,
 }: {
   plans: PlanOption[];
   currentPlanId?: string;
+  storeId: string;
 }) {
   const [state, action] = useActionState<ActionResult, FormData>(changePlan, {
     ok: true,
@@ -196,6 +200,7 @@ function ChangePlanForm({
 
   return (
     <form action={action}>
+      <input type="hidden" name="store_id" value={storeId} />
       <FormSection
         title="Change plan"
         description="Issuing a licence supersedes the current one, which is kept as history. A downgrade is refused while usage exceeds the target plan's limits."

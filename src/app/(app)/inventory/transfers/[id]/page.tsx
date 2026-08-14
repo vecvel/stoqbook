@@ -102,7 +102,7 @@ export default async function TransferDetailPage({
   const currentStageIndex = STAGES.findIndex((s) => s.key === transfer.status);
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title={transfer.transfer_number}
         description={`${row.sourceName} → ${row.destinationName}`}

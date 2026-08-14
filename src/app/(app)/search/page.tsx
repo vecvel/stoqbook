@@ -29,7 +29,7 @@ export default async function SearchPage({
   const totalHits = groups.reduce((n, g) => n + g.hits.length, 0);
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Search"
         description={
@@ -40,7 +40,7 @@ export default async function SearchPage({
       />
 
       <form action="/search" className="flex flex-wrap items-end gap-2">
-        <div className="min-w-[240px] flex-1">
+        <div className="min-w-60 flex-1">
           <label htmlFor="q" className="field-label">
             Query
           </label>

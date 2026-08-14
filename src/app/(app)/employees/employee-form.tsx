@@ -63,13 +63,13 @@ export interface RoleOption {
   id: string;
   name: string;
   description: string | null;
-  isOwner: boolean;
+  isSuperAdmin: boolean;
 }
 
 export function EmployeeForm({
   values,
   roles,
-  branches,
+  stores,
   departments,
   designations,
   passwordMinLength,
@@ -78,7 +78,7 @@ export function EmployeeForm({
 }: {
   values: EmployeeFormValues;
   roles: RoleOption[];
-  branches: { id: string; name: string }[];
+  stores: { id: string; name: string }[];
   departments: { id: string; name: string }[];
   designations: { id: string; name: string }[];
   passwordMinLength: number;
@@ -214,15 +214,15 @@ export function EmployeeForm({
               <option value="temporary">Temporary</option>
             </select>
           </Field>
-          <Field label="Primary branch" htmlFor="branch_id">
+          <Field label="Primary store" htmlFor="store_id">
             <select
-              id="branch_id"
-              name="branch_id"
+              id="store_id"
+              name="store_id"
               defaultValue={values.storeId}
               className="h-9 w-full rounded-xs border border-input bg-background px-2.5 text-sm outline-none focus:border-ring"
             >
               <option value="">No store</option>
-              {branches.map((b) => (
+              {stores.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
@@ -353,7 +353,7 @@ export function EmployeeForm({
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="text-sm font-medium">{role.name}</span>
-                      {role.isOwner ? (
+                      {role.isSuperAdmin ? (
                         <Badge variant="soft-accent">Full access</Badge>
                       ) : null}
                     </span>

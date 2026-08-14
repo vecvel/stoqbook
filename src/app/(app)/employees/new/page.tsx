@@ -23,7 +23,7 @@ export default async function NewEmployeePage() {
   ]);
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="New employee"
         breadcrumbs={[
@@ -37,7 +37,7 @@ export default async function NewEmployeePage() {
           storeId: ctx.activeStore?.id ?? "",
         }}
         roles={options.roles}
-        branches={options.branches}
+        stores={options.stores}
         departments={options.departments}
         designations={options.designations}
         passwordMinLength={readNumber(

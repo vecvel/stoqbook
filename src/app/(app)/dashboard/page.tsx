@@ -81,7 +81,7 @@ export default async function DashboardPage({
 
   const currency = ctx.business.currency;
 
-  // Users without cross-branch permission only ever see their active branch.
+  // Users without cross-store permission only ever see their active store.
   const storeId = storeScope(ctx);
 
   const scope: WidgetScope = { ctx, period, storeId };

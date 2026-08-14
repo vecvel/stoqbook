@@ -17,7 +17,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
-import { branches, salesInvoices, salesReturns, users } from "@/db/schema";
+import { stores, salesInvoices, salesReturns, users } from "@/db/schema";
 import { parseListQuery } from "@/lib/api/query";
 import { requirePermission } from "@/lib/authz/guard";
 import { formatDateTime, formatMoney, humanise } from "@/lib/format";
@@ -51,12 +51,12 @@ export default async function SalesReturnsPage({
         invoiceId: salesReturns.invoice_id,
         invoiceNumber: salesInvoices.invoice_number,
         customerName: salesInvoices.customer_name,
-        storeName: branches.name,
+        storeName: stores.name,
         createdByName: users.full_name,
       })
       .from(salesReturns)
       .innerJoin(salesInvoices, eq(salesInvoices.id, salesReturns.invoice_id))
-      .innerJoin(branches, eq(branches.id, salesReturns.branch_id))
+      .innerJoin(stores, eq(stores.id, salesReturns.store_id))
       .leftJoin(users, eq(users.id, salesReturns.created_by))
       .where(where)
       .orderBy(desc(salesReturns.return_date))

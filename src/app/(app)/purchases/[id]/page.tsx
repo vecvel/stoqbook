@@ -17,7 +17,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   goodsReceipts,
   products,
   purchaseOrderItems,
@@ -53,13 +53,13 @@ export default async function PurchaseOrderPage({
       supplierPhone: suppliers.phone,
       supplierEmail: suppliers.email,
       supplierOutstanding: suppliers.outstanding_balance,
-      storeName: branches.name,
+      storeName: stores.name,
       warehouseName: warehouses.name,
       createdByName: users.full_name,
     })
     .from(purchaseOrders)
     .innerJoin(suppliers, eq(suppliers.id, purchaseOrders.supplier_id))
-    .innerJoin(branches, eq(branches.id, purchaseOrders.branch_id))
+    .innerJoin(stores, eq(stores.id, purchaseOrders.store_id))
     .innerJoin(warehouses, eq(warehouses.id, purchaseOrders.warehouse_id))
     .leftJoin(users, eq(users.id, purchaseOrders.created_by))
     .where(
@@ -128,7 +128,7 @@ export default async function PurchaseOrderPage({
     outstandingItems.length > 0;
 
   return (
-    <div className="page max-w-6xl">
+    <div className="page">
       <PageHeader
         title={order.order_number}
         description={`${row.supplierName} · ordered ${formatDate(order.order_date)}`}

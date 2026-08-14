@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { loginAction, type AuthFormState } from "../actions";
 
 const DEMO_ACCOUNTS = [
-  { label: "Owner", email: "owner@freshmart.test" },
-  { label: "Manager", email: "manager@freshmart.test" },
-  { label: "Cashier", email: "cashier@freshmart.test" },
-  { label: "Inventory", email: "stock@freshmart.test" },
-  { label: "Accountant", email: "accounts@freshmart.test" },
+  { label: "Super Admin", email: "superadmin@mybusiness.test", desc: "Universal control over all modules, stores & reports." },
+  { label: "Manager", email: "manager@mybusiness.test", desc: "Runs single-store inventory, sales, purchases & staff." },
+  { label: "Cashier", email: "cashier@mybusiness.test", desc: "Fast POS counter sales, sessions & receipt prints." },
+  { label: "Inventory", email: "stock@mybusiness.test", desc: "Monitors stock levels, audits, counts & transfers." },
+  { label: "Accountant", email: "accounts@mybusiness.test", desc: "Financial ledgers, expenses & reports (Read-only)." },
 ];
 
 const DEMO_PASSWORD = "Stoqbook@123";
@@ -66,7 +66,7 @@ export function LoginForm() {
             {DEMO_PASSWORD}
           </code>
         </div>
-        <div className="mt-2 grid grid-cols-2 gap-1">
+        <div className="mt-2.5 flex flex-col gap-1.5">
           {DEMO_ACCOUNTS.map((account) => (
             <button
               key={account.email}
@@ -80,12 +80,17 @@ export function LoginForm() {
                 if (password) password.value = DEMO_PASSWORD;
                 email?.focus();
               }}
-              className="rounded-xs px-1.5 py-1 text-left text-[11px] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+              className="group flex flex-col gap-0.5 rounded-xs border border-transparent bg-transparent px-2 py-1.5 text-left text-[11px] text-muted-foreground transition-all hover:border-border hover:bg-card hover:text-foreground"
             >
-              <span className="block font-medium text-foreground">
+              <span className="font-semibold text-foreground group-hover:text-accent">
                 {account.label}
               </span>
-              <span className="block truncate">{account.email}</span>
+              <span className="text-[10px] text-muted-foreground/80">
+                {account.email}
+              </span>
+              <span className="text-[10px] leading-normal text-muted-foreground/75 group-hover:text-muted-foreground">
+                {account.desc}
+              </span>
             </button>
           ))}
         </div>

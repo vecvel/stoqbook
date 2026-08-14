@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { branches, inventoryLevels, warehouses } from "@/db/schema";
+import { stores, inventoryLevels, warehouses } from "@/db/schema";
 import { limitFor } from "@/lib/authz/entitlements";
 import { requirePermission } from "@/lib/authz/guard";
 import { formatMoney, humanise } from "@/lib/format";
@@ -29,12 +29,12 @@ export default async function WarehousesPage() {
         id: warehouses.id,
         code: warehouses.code,
         name: warehouses.name,
-        storeId: warehouses.branch_id,
-        storeName: branches.name,
+        storeId: warehouses.store_id,
+        storeName: stores.name,
         city: warehouses.city,
         addressLine1: warehouses.address_line1,
         valuationMethod: warehouses.valuation_method,
-        isDefault: warehouses.is_default,
+        sortOrder: warehouses.sort_order,
         isActive: warehouses.is_active,
         stockLines: db.$count(
           inventoryLevels,
@@ -48,22 +48,22 @@ export default async function WarehousesPage() {
           .where(eq(inventoryLevels.warehouse_id, warehouses.id))})`,
       })
       .from(warehouses)
-      .leftJoin(branches, eq(branches.id, warehouses.branch_id))
+      .leftJoin(stores, eq(stores.id, warehouses.store_id))
       .where(
         and(
           eq(warehouses.tenant_id, ctx.business.id),
           isNull(warehouses.deleted_at),
         ),
       )
-      .orderBy(asc(warehouses.name)),
+      .orderBy(asc(warehouses.sort_order), asc(warehouses.name)),
 
     db
-      .select({ id: branches.id, name: branches.name })
-      .from(branches)
+      .select({ id: stores.id, name: stores.name })
+      .from(stores)
       .where(
-        and(eq(branches.tenant_id, ctx.business.id), isNull(branches.deleted_at)),
+        and(eq(stores.tenant_id, ctx.business.id), isNull(stores.deleted_at)),
       )
-      .orderBy(asc(branches.name)),
+      .orderBy(asc(stores.name)),
   ]);
 
   const limit = limitFor(ctx.entitlements, "max_warehouses");
@@ -78,26 +78,19 @@ export default async function WarehousesPage() {
     values: {
       code: row.code,
       name: row.name,
-      branch_id: row.storeId ?? "",
+      store_id: row.storeId ?? "",
       address_line1: row.addressLine1 ?? "",
       city: row.city ?? "",
       valuation_method: row.valuationMethod,
       is_active: row.isActive,
     },
-    deleteBlockedReason: row.isDefault
-      ? "This is the default warehouse"
-      : row.stockLines > 0
+    deleteBlockedReason: row.stockLines > 0
         ? `Holds ${row.stockLines} stock record${row.stockLines === 1 ? "" : "s"}`
         : undefined,
     cells: {
-      name: (
-        <span className="flex items-center gap-2">
-          <span className="font-medium">{row.name}</span>
-          {row.isDefault ? <Badge variant="soft-neutral">Default</Badge> : null}
-        </span>
-      ),
+      name: <span className="font-medium">{row.name}</span>,
       code: <span className="font-mono text-xs">{row.code}</span>,
-      branch: (
+      store: (
         <span className="text-muted-foreground">
           {row.storeName ?? "Business-wide"}
         </span>
@@ -174,7 +167,7 @@ export default async function WarehousesPage() {
           },
           { name: "code", label: "Code", placeholder: "WH-MAIN", required: true },
           {
-            name: "branch_id",
+            name: "store_id",
             label: "Serves store",
             type: "select",
             options: [

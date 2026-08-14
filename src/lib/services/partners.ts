@@ -63,7 +63,7 @@ export async function postCustomerLedger(
   await tx.insert(customerLedger).values({
     tenant_id: ctx.businessId,
     customer_id: entry.customerId,
-    branch_id: entry.storeId ?? null,
+    store_id: entry.storeId ?? null,
     amount: dec(entry.amount),
     balance_after: balanceAfter,
     kind: entry.kind,
@@ -258,7 +258,7 @@ export async function postSupplierLedger(
   await tx.insert(supplierLedger).values({
     tenant_id: ctx.businessId,
     supplier_id: entry.supplierId,
-    branch_id: entry.storeId ?? null,
+    store_id: entry.storeId ?? null,
     amount: dec(entry.amount),
     balance_after: balanceAfter,
     kind: entry.kind,

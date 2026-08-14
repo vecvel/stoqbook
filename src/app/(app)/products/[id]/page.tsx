@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import {
   Table,
@@ -83,7 +83,7 @@ export default async function ProductDetailPage({
           eq(inventoryLevels.product_id, id),
         ),
       )
-      .orderBy(desc(warehouses.is_default)),
+      .orderBy(asc(warehouses.sort_order)),
 
     hasPermission(ctx, "inventory.view")
       ? db

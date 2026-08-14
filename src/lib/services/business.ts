@@ -4,7 +4,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 
 import { db, type Transaction } from "@/db";
 import {
-  branches,
+  stores,
   customerGroups,
   customers,
   departments,
@@ -26,7 +26,7 @@ import {
 } from "@/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import { ConflictError, LimitExceededError, ValidationError } from "@/lib/authz/errors";
-import { limitFor, resolveEntitlements, type Entitlements } from "@/lib/authz/entitlements";
+import { limitFor, type Entitlements } from "@/lib/authz/entitlements";
 import { slugify } from "@/lib/format";
 import { ALL_SETTINGS } from "@/lib/registry";
 
@@ -40,7 +40,7 @@ import { provisionSettings } from "./settings";
  *
  * StoqBook is installed for one business. Setup runs once, from the first-run
  * wizard, and provisions the business record, its organisation profile, the
- * default store and warehouse, the standard role set, the owner account, base
+ * default store and warehouse, the standard role set, the super admin account, base
  * reference data, document sequences, settings and a licence — all in one
  * transaction (02-business-structure.md § Business Setup Flow).
  */
@@ -75,19 +75,10 @@ export async function getBusiness() {
 
 export interface SetupBusinessInput {
   businessName: string;
-  ownerName: string;
-  ownerEmail: string;
-  ownerPassword: string;
-  /** Plan slug; defaults to `lifetime` for a perpetual installation. */
-  planSlug?: string;
-  billingMode?:
-    | "lifetime"
-    | "subscription"
-    | "trial"
-    | "manual"
-    | "internal";
-  trialDays?: number;
-  licenseKey?: string;
+  superAdminName: string;
+  superAdminEmail: string;
+  superAdminPassword: string;
+
   country?: string;
   currency?: string;
   timezone?: string;
@@ -99,10 +90,10 @@ export interface SetupBusinessInput {
 export interface SetupBusinessResult {
   businessId: string;
   organizationId: string;
-  ownerUserId: string;
-  storeId: string;
-  warehouseId: string;
-  licenseId: string;
+  superAdminUserId: string;
+  storeId?: string | null;
+  warehouseId?: string | null;
+
   slug: string;
 }
 
@@ -121,17 +112,17 @@ export async function setupBusiness(
     throw ConflictError("This installation is already set up.");
   }
 
-  const email = input.ownerEmail.trim().toLowerCase();
+  const email = input.superAdminEmail.trim().toLowerCase();
   if (!email.includes("@")) throw ValidationError("A valid email is required.");
 
   const desiredSlug = slugify(input.businessName);
   if (!desiredSlug) throw ValidationError("Business name is required.");
 
-  const plan = await resolvePlan(input.planSlug);
-  const passwordHash = await hashPassword(input.ownerPassword);
+
+  const passwordHash = await hashPassword(input.superAdminPassword);
 
   try {
-    return await runSetup(input, { email, desiredSlug, plan, passwordHash });
+    return await runSetup(input, { email, desiredSlug, passwordHash });
   } catch (error) {
     if (isSingletonViolation(error)) {
       throw ConflictError("This installation is already set up.");
@@ -152,11 +143,11 @@ async function runSetup(
   prepared: {
     email: string;
     desiredSlug: string;
-    plan: Awaited<ReturnType<typeof resolvePlan>>;
+
     passwordHash: string;
   },
 ): Promise<SetupBusinessResult> {
-  const { email, desiredSlug, plan, passwordHash } = prepared;
+  const { email, desiredSlug, passwordHash } = prepared;
 
   return db.transaction(async (tx) => {
     const slug = await uniqueSlug(tx, desiredSlug);
@@ -170,7 +161,7 @@ async function runSetup(
         // The wizard completes in one submission, so the business goes straight
         // to active — there is no email-verification step to wait on.
         status: "active",
-        contact_name: input.ownerName.trim(),
+        contact_name: input.superAdminName.trim(),
         contact_email: email,
         contact_phone: input.contactPhone ?? null,
         country: input.country ?? "IN",
@@ -178,32 +169,6 @@ async function runSetup(
         timezone: input.timezone ?? "Asia/Kolkata",
         activated_at: new Date(),
         setup_completed_at: new Date(),
-      })
-      .returning();
-
-    /* ---- Licence ------------------------------------------------------- */
-    const billingMode = input.billingMode ?? "lifetime";
-    const trialDays = input.trialDays ?? 14;
-    // A lifetime or internal licence never expires — that is the point of a
-    // perpetual per-installation sale (03-license-system.md § Billing Modes).
-    const expiresAt =
-      billingMode === "trial"
-        ? new Date(Date.now() + trialDays * 86_400_000)
-        : billingMode === "subscription"
-          ? new Date(Date.now() + 365 * 86_400_000)
-          : null;
-
-    const [license] = await tx
-      .insert(licenses)
-      .values({
-        tenant_id: business.id,
-        plan_id: plan.id,
-        status: "active",
-        billing_mode: billingMode,
-        billing_cycle: billingMode === "subscription" ? "yearly" : "none",
-        license_key: input.licenseKey?.trim() || null,
-        expires_at: expiresAt,
-        is_current: true,
       })
       .returning();
 
@@ -219,35 +184,52 @@ async function runSetup(
       })
       .returning();
 
-    /* ---- Default store and warehouse ----------------------------------- */
-    const [store] = await tx
-      .insert(branches)
-      .values({
-        tenant_id: business.id,
-        organization_id: organization.id,
-        code: "MAIN",
-        name: input.storeName?.trim() || "Main Store",
-        document_prefix: null,
-        is_default: true,
-        is_active: true,
-      })
-      .returning();
+    /* ---- Optional store and warehouse creation ------------------------- */
+    let store: typeof stores.$inferSelect | null = null;
+    let warehouse: typeof warehouses.$inferSelect | null = null;
 
-    const [warehouse] = await tx
-      .insert(warehouses)
-      .values({
-        tenant_id: business.id,
-        branch_id: store.id,
-        code: "WH-MAIN",
-        name: "Main Warehouse",
-        is_default: true,
-        is_active: true,
-      })
-      .returning();
+    if (input.storeName?.trim()) {
+      const [newStore] = await tx
+        .insert(stores)
+        .values({
+          tenant_id: business.id,
+          organization_id: organization.id,
+          code: "STR",
+          name: input.storeName.trim(),
+          email,
+          phone: input.contactPhone ?? null,
+          address_line1: null,
+          address_line2: null,
+          city: null,
+          state: null,
+          postal_code: null,
+          country: input.country ?? "IN",
+          document_prefix: "STR",
+          timezone: input.timezone ?? "Asia/Kolkata",
+          currency: input.currency ?? "INR",
+          is_active: true,
+        })
+        .returning();
+      store = newStore;
+
+      const [newWarehouse] = await tx
+        .insert(warehouses)
+        .values({
+          tenant_id: business.id,
+          store_id: store.id,
+          code: "STR-WH",
+          name: `${input.storeName.trim()} Warehouse`,
+          sort_order: 0,
+          is_active: true,
+        })
+        .returning();
+      warehouse = newWarehouse;
+    }
 
     /* ---- Roles --------------------------------------------------------- */
     const roleIdBySlug = new Map<string, string>();
     for (const definition of DEFAULT_ROLES) {
+      const isSuper = definition.isSuperAdmin || false;
       const [role] = await tx
         .insert(roles)
         .values({
@@ -256,15 +238,15 @@ async function runSetup(
           name: definition.name,
           description: definition.description,
           is_system: true,
-          is_owner: definition.isOwner ?? false,
+          is_super_admin: isSuper,
         })
         .returning();
 
       roleIdBySlug.set(definition.slug, role.id);
 
-      // The Owner role derives its permissions dynamically at request time, so
+      // The Super Admin role derives its permissions dynamically at request time, so
       // storing rows for it would go stale as modules are added.
-      if (!definition.isOwner) {
+      if (!isSuper) {
         const keys = resolveRolePermissions(definition);
         if (keys.length > 0) {
           await tx.insert(rolePermissions).values(
@@ -277,13 +259,13 @@ async function runSetup(
       }
     }
 
-    /* ---- Owner user ---------------------------------------------------- */
-    const [owner] = await tx
+    /* ---- Super Admin user ---------------------------------------------- */
+    const [superAdmin] = await tx
       .insert(users)
       .values({
         tenant_id: business.id,
         employee_code: "EMP-000001",
-        full_name: input.ownerName.trim(),
+        full_name: input.superAdminName.trim(),
         email,
         phone: input.contactPhone ?? null,
         password_hash: passwordHash,
@@ -291,13 +273,13 @@ async function runSetup(
         status: "active",
         joining_date: new Date(),
         employment_type: "permanent",
-        branch_id: store.id,
+        store_id: store?.id ?? null,
       })
       .returning();
 
     await tx.insert(userRoles).values({
-      user_id: owner.id,
-      role_id: roleIdBySlug.get("owner")!,
+      user_id: superAdmin.id,
+      role_id: roleIdBySlug.get("super_admin")!,
     });
 
     /* ---- Reference data ------------------------------------------------ */
@@ -316,9 +298,9 @@ async function runSetup(
         moduleSlug: "admin",
         entityType: "business",
         entityId: business.id,
-        summary: `${business.name} set up on the ${plan.name} plan`,
-        payload: { slug, plan: plan.slug, billing_mode: billingMode },
-        actorName: input.ownerName,
+        summary: `${business.name} set up`,
+        payload: { slug },
+        actorName: input.superAdminName,
       },
       tx,
     );
@@ -326,10 +308,9 @@ async function runSetup(
     return {
       businessId: business.id,
       organizationId: organization.id,
-      ownerUserId: owner.id,
-      storeId: store.id,
-      warehouseId: warehouse.id,
-      licenseId: license.id,
+      superAdminUserId: superAdmin.id,
+      storeId: store?.id ?? null,
+      warehouseId: warehouse?.id ?? null,
       slug,
     };
   });
@@ -597,7 +578,7 @@ export async function usageFor(
   resource: LimitedResource,
 ): Promise<number> {
   const table = {
-    stores: branches,
+    stores: stores,
     warehouses,
     employees: users,
     products: (await import("@/db/schema")).products,
@@ -618,16 +599,15 @@ export async function usageFor(
 export async function assertWithinLimit(
   businessId: string,
   resource: LimitedResource,
-  entitlements?: Entitlements,
+  entitlements: Entitlements,
 ): Promise<void> {
-  const ent = entitlements ?? (await resolveEntitlements(businessId));
-  const limit = limitFor(ent, LIMIT_KEY[resource]);
+  const limit = limitFor(entitlements, LIMIT_KEY[resource]);
   if (limit === null) return;
 
   const used = await usageFor(businessId, resource);
   if (used >= limit) {
     throw LimitExceededError(
-      `Your ${ent.plan?.name ?? "current"} licence allows ${limit} ${LABEL[resource]}. ` +
+      `Your ${entitlements.plan?.name ?? "current"} licence allows ${limit} ${LABEL[resource]}. ` +
         "Change plan to add more.",
     );
   }
@@ -652,16 +632,14 @@ const LIMITED_RESOURCES: LimitedResource[] = [
 /** Usage vs limits for the licence page. */
 export async function usageSummary(
   businessId: string,
-  entitlements?: Entitlements,
+  entitlements: Entitlements,
 ): Promise<UsageSummary[]> {
-  const ent = entitlements ?? (await resolveEntitlements(businessId));
-
   return Promise.all(
     LIMITED_RESOURCES.map(async (resource) => ({
       resource,
       label: LABEL[resource],
       used: await usageFor(businessId, resource),
-      limit: limitFor(ent, LIMIT_KEY[resource]),
+      limit: limitFor(entitlements, LIMIT_KEY[resource]),
     })),
   );
 }

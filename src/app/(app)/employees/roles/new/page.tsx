@@ -28,7 +28,7 @@ export default async function NewRolePage() {
         role={{
           name: "",
           description: "",
-          isOwner: false,
+          isSuperAdmin: false,
           isSystem: false,
           granted: [],
         }}

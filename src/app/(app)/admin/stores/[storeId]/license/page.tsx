@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { Notice } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -16,7 +16,7 @@ import {
 import { StatGrid, StatTile } from "@/components/shared/stat-tile";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { db } from "@/db";
-import { licenses, plans } from "@/db/schema";
+import { stores, licenses, plans } from "@/db/schema";
 import { requireAdmin } from "@/lib/authz/guard";
 import { formatDate, formatMoney, humanise } from "@/lib/format";
 import { ALL_FEATURES, ALL_MODULES } from "@/lib/registry";
@@ -32,13 +32,37 @@ function dateInputValue(value: Date | null): string {
   return value ? new Date(value).toISOString().slice(0, 10) : "";
 }
 
-export default async function AdminLicensePage() {
-  // Deliberately reachable with an invalid licence — this is where it gets fixed.
+export default async function AdminLicensePage({
+  params,
+}: {
+  params: Promise<{ storeId: string }>;
+}) {
+  const { storeId } = await params;
   const ctx = await requireAdmin("admin.license_manage");
-  const { entitlements } = ctx;
+
+  const [store] = await db
+    .select()
+    .from(stores)
+    .where(and(eq(stores.id, storeId), eq(stores.tenant_id, ctx.business.id)))
+    .limit(1);
+
+  if (!store) {
+    return (
+      <div className="page">
+        <PageHeader title="Store not found" />
+        <Notice tone="danger" title="Store not found">
+          This store does not exist or has been deleted.
+        </Notice>
+      </div>
+    );
+  }
+
+  // Fetch the specific store's entitlements
+  const { resolveEntitlements } = await import("@/lib/authz/entitlements");
+  const storeEntitlements = await resolveEntitlements(ctx.business.id, store.id, false);
 
   const [usage, availablePlans, history] = await Promise.all([
-    usageSummary(ctx.business.id, entitlements),
+    usageSummary(ctx.business.id, storeEntitlements),
     db.select().from(plans).where(eq(plans.archived, false)).orderBy(asc(plans.sort_order)),
     db
       .select({
@@ -52,14 +76,14 @@ export default async function AdminLicensePage() {
       })
       .from(licenses)
       .leftJoin(plans, eq(plans.id, licenses.plan_id))
-      .where(eq(licenses.tenant_id, ctx.business.id))
+      .where(and(eq(licenses.tenant_id, ctx.business.id), eq(licenses.store_id, storeId)))
       .orderBy(desc(licenses.created_at))
       .limit(10),
   ]);
 
   const currency = ctx.business.currency;
-  const licence = entitlements.license;
-  const plan = entitlements.plan;
+  const licence = storeEntitlements.license;
+  const plan = storeEntitlements.plan;
 
   const licenceView: LicenceView | null = licence
     ? {
@@ -103,16 +127,16 @@ export default async function AdminLicensePage() {
         actions={licence ? <StatusBadge status={licence.status} /> : null}
       />
 
-      {!entitlements.isValid ? (
+      {!storeEntitlements.isValid ? (
         <Notice tone="danger" title="Licence not active">
-          {entitlements.invalidReason} Operational screens stay locked until this
+          {storeEntitlements.invalidReason} Operational screens stay locked until this
           is resolved. No business data has been affected.
         </Notice>
-      ) : entitlements.daysRemaining !== null &&
-        entitlements.daysRemaining <= 30 ? (
+      ) : storeEntitlements.daysRemaining !== null &&
+        storeEntitlements.daysRemaining <= 30 ? (
         <Notice
           tone="warning"
-          title={`${entitlements.daysRemaining} day${entitlements.daysRemaining === 1 ? "" : "s"} remaining`}
+          title={`${storeEntitlements.daysRemaining} day${storeEntitlements.daysRemaining === 1 ? "" : "s"} remaining`}
         >
           Renew before{" "}
           {licence?.expires_at ? formatDate(licence.expires_at) : "expiry"} to
@@ -132,22 +156,22 @@ export default async function AdminLicensePage() {
           label="Status"
           value={licence ? humanise(licence.status) : "—"}
           sublabel={
-            entitlements.daysRemaining === null
+            storeEntitlements.daysRemaining === null
               ? "Never expires"
-              : `${entitlements.daysRemaining} days left`
+              : `${storeEntitlements.daysRemaining} days left`
           }
-          tone={entitlements.isValid ? "success" : "danger"}
+          tone={storeEntitlements.isValid ? "success" : "danger"}
           icon="ShieldCheck"
         />
         <StatTile
           label="Modules"
-          value={`${entitlements.modules.size} / ${ALL_MODULES.length}`}
+          value={`${storeEntitlements.modules.size} / ${ALL_MODULES.length}`}
           icon="Blocks"
           href="/admin/registry"
         />
         <StatTile
           label="Features"
-          value={`${entitlements.features.size} / ${ALL_FEATURES.length}`}
+          value={`${storeEntitlements.features.size} / ${ALL_FEATURES.length}`}
           icon="ToggleRight"
           href="/admin/registry/features"
         />
@@ -261,8 +285,9 @@ export default async function AdminLicensePage() {
           name: f.name,
           moduleSlug: f.moduleSlug,
         }))}
-        effectiveModules={[...entitlements.modules]}
-        effectiveFeatures={[...entitlements.features]}
+        effectiveModules={[...storeEntitlements.modules]}
+        effectiveFeatures={[...storeEntitlements.features]}
+        storeId={storeId}
       />
 
       {/* Superseded licences are retained as history, never overwritten. */}

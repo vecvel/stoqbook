@@ -94,7 +94,7 @@ export default async function AdjustmentDetailPage({
   );
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title={adjustment.adjustment_number}
         description={`${row.warehouseName} · ${humanise(adjustment.reason)}`}

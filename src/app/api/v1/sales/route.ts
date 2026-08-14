@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       channel: salesInvoices.channel,
       customer_id: salesInvoices.customer_id,
       customer_name: salesInvoices.customer_name,
-      branch_id: salesInvoices.branch_id,
+      store_id: salesInvoices.store_id,
       subtotal: salesInvoices.subtotal,
       discount_amount: salesInvoices.discount_amount,
       tax_amount: salesInvoices.tax_amount,
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       status: salesInvoices.status,
       payment: salesInvoices.payment_status,
       channel: salesInvoices.channel,
-      branch: salesInvoices.branch_id,
+      store: salesInvoices.store_id,
       customer: salesInvoices.customer_id,
     },
   });

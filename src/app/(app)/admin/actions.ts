@@ -243,6 +243,9 @@ export async function changePlan(
     const planId = uuid(form, "plan_id");
     if (!planId) return failure("Select a plan.");
 
+    const storeId = uuid(form, "store_id");
+    if (!storeId) return failure("Store not found.");
+
     // A downgrade is refused while usage exceeds the target plan.
     const check = await validatePlanChange(ctx.business.id, planId);
     if (!check.ok) {
@@ -268,12 +271,14 @@ export async function changePlan(
         .where(
           and(
             eq(licenses.tenant_id, ctx.business.id),
+            eq(licenses.store_id, storeId),
             eq(licenses.is_current, true),
           ),
         );
 
       await tx.insert(licenses).values({
         tenant_id: ctx.business.id,
+        store_id: storeId,
         plan_id: planId,
         status: "active",
         billing_mode: billingMode,
@@ -304,7 +309,7 @@ export async function changePlan(
       payload: { plan_id: planId, billing_mode: billingMode },
     });
 
-    revalidate("/admin", "/admin/license", "/settings/license");
+    revalidate("/admin", `/admin/stores/${storeId}/license`, "/settings/license");
     return success(undefined, "Licence updated.");
   });
 }
@@ -356,7 +361,7 @@ export async function updateLicense(
       payload: { changes: diff(before, after) },
     });
 
-    revalidate("/admin", "/admin/license", "/settings/license");
+    revalidate("/admin", `/admin/stores/${before.store_id}/license`, "/settings/license");
     return success(undefined, "Licence updated.");
   });
 }

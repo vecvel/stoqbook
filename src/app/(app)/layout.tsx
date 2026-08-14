@@ -21,10 +21,7 @@ export default async function AppLayout({
 
   if (!ctx) redirect("/login");
 
-  // A business that cannot operate gets an explanatory screen rather than a
-  // shell full of dead links. The Owner is exempt, because the admin panel is
-  // where a suspension or licence problem gets fixed.
-  if (ctx.business.status !== "active" && !ctx.isOwner) {
+  if (ctx.business.status !== "active" && !ctx.isSuperAdmin) {
     redirect("/license-required");
   }
 
@@ -53,6 +50,7 @@ export default async function AppLayout({
       businessName={ctx.business.name}
       navigation={nav}
       user={{
+        id: ctx.user.id,
         name: ctx.user.full_name,
         email: ctx.user.email,
         roleLabel,

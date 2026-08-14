@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     if (query.filters.warehouse) {
       conditions.push(eq(inventoryLevels.warehouse_id, query.filters.warehouse));
     }
-    if (query.filters.branch) {
-      conditions.push(eq(inventoryLevels.branch_id, query.filters.branch));
+    if (query.filters.store) {
+      conditions.push(eq(inventoryLevels.store_id, query.filters.store));
     }
     if (query.filters.product) {
       conditions.push(eq(inventoryLevels.product_id, query.filters.product));
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
           unit: units.short_name,
           warehouse_id: inventoryLevels.warehouse_id,
           warehouse: warehouses.name,
-          branch_id: inventoryLevels.branch_id,
+          store_id: inventoryLevels.store_id,
           quantity_available: inventoryLevels.quantity_available,
           quantity_reserved: inventoryLevels.quantity_reserved,
           quantity_damaged: inventoryLevels.quantity_damaged,

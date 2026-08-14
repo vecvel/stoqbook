@@ -50,7 +50,7 @@ export default async function BrandsPage() {
   }));
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Brands"
         description="Optional manufacturer grouping used for filtering and reporting."

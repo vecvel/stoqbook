@@ -106,7 +106,7 @@ export default async function IntegrationsPage() {
   ).length;
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Integrations"
         description="Outbound channels and the API. A channel needs both a switch and an endpoint before anything leaves the building."

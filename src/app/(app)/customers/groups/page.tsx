@@ -76,7 +76,7 @@ export default async function CustomerGroupsPage() {
   }));
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Customer groups"
         description="Groups drive default pricing and simplify reporting. A customer belongs to one group."

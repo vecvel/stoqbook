@@ -19,6 +19,7 @@ import {
   notificationRules,
   permissions,
   plans,
+  licenses,
   products,
   tenants,
   units,
@@ -26,7 +27,8 @@ import {
   customers,
   suppliers,
   supplierProducts,
-  branches,
+  stores,
+  warehouses,
   users,
 } from "./schema";
 import {
@@ -219,28 +221,182 @@ async function main() {
     return;
   }
 
-  const ownerEmail = (process.env.SEED_OWNER_EMAIL ?? "owner@freshmart.test")
+  const superAdminEmail = (
+    process.env.SEED_SUPER_ADMIN_EMAIL ??
+    process.env.SEED_OWNER_EMAIL ??
+    "superadmin@mybusiness.test"
+  )
     .trim()
     .toLowerCase();
-  const ownerPassword = process.env.SEED_OWNER_PASSWORD ?? "Stoqbook@123";
+  const superAdminPassword = process.env.SEED_SUPER_ADMIN_PASSWORD ?? process.env.SEED_OWNER_PASSWORD ?? "Stoqbook@123";
 
   const provisioned = await setupBusiness({
-    businessName: "FreshMart",
-    storeName: "FreshMart Andheri",
-    ownerName: "Asha Menon",
-    ownerEmail,
-    ownerPassword,
-    planSlug: "lifetime",
-    billingMode: "lifetime",
-    licenseKey: "STQB-DEMO-0000-0001",
+    businessName: "MyBusiness",
+    superAdminName: "Stoqer",
+    superAdminEmail,
+    superAdminPassword,
     contactPhone: "+91 98200 11223",
   });
-  log(`business ${provisioned.slug} (${ownerEmail})`);
+  log(`business ${provisioned.slug} (${superAdminEmail})`);
 
   const businessId = provisioned.businessId;
 
+  /* ---- Seed 3 equal demo stores and warehouses --------------------------- */
+  const [storeBlr] = await db
+    .insert(stores)
+    .values({
+      tenant_id: businessId,
+      organization_id: provisioned.organizationId,
+      code: "BLR",
+      name: "Bangalore Store",
+      email: "bangalore@mybusiness.test",
+      phone: "+91 80 4112 2334",
+      address_line1: "123 MG Road",
+      address_line2: "Indiranagar",
+      city: "Bangalore",
+      state: "Karnataka",
+      postal_code: "560008",
+      country: "IN",
+      document_prefix: "BLR",
+      timezone: "Asia/Kolkata",
+      currency: "INR",
+      is_active: true,
+    })
+    .returning();
+
+  const [whBlr] = await db
+    .insert(warehouses)
+    .values({
+      tenant_id: businessId,
+      store_id: storeBlr.id,
+      code: "BLR-WH",
+      name: "Bangalore Warehouse",
+      address_line1: "123 MG Road",
+      city: "Bangalore",
+      state: "Karnataka",
+      postal_code: "560008",
+      sort_order: 0,
+      is_active: true,
+    })
+    .returning();
+
+  const [storeMum] = await db
+    .insert(stores)
+    .values({
+      tenant_id: businessId,
+      organization_id: provisioned.organizationId,
+      code: "MUM",
+      name: "Mumbai Store",
+      email: "mumbai@mybusiness.test",
+      phone: "+91 22 2654 3210",
+      address_line1: "456 Bandra West",
+      address_line2: "Linking Road",
+      city: "Mumbai",
+      state: "Maharashtra",
+      postal_code: "400050",
+      country: "IN",
+      document_prefix: "MUM",
+      timezone: "Asia/Kolkata",
+      currency: "INR",
+      is_active: true,
+    })
+    .returning();
+
+  await db
+    .insert(warehouses)
+    .values({
+      tenant_id: businessId,
+      store_id: storeMum.id,
+      code: "MUM-WH",
+      name: "Mumbai Warehouse",
+      address_line1: "456 Bandra West",
+      city: "Mumbai",
+      state: "Maharashtra",
+      postal_code: "400050",
+      sort_order: 1,
+      is_active: true,
+    });
+
+  const [storeDel] = await db
+    .insert(stores)
+    .values({
+      tenant_id: businessId,
+      organization_id: provisioned.organizationId,
+      code: "DEL",
+      name: "Delhi Store",
+      email: "delhi@mybusiness.test",
+      phone: "+91 11 4321 0987",
+      address_line1: "789 Connaught Place",
+      address_line2: "Block E",
+      city: "New Delhi",
+      state: "Delhi",
+      postal_code: "110001",
+      country: "IN",
+      document_prefix: "DEL",
+      timezone: "Asia/Kolkata",
+      currency: "INR",
+      is_active: true,
+    })
+    .returning();
+
+  await db
+    .insert(warehouses)
+    .values({
+      tenant_id: businessId,
+      store_id: storeDel.id,
+      code: "DEL-WH",
+      name: "Delhi Warehouse",
+      address_line1: "789 Connaught Place",
+      city: "New Delhi",
+      state: "Delhi",
+      postal_code: "110001",
+      sort_order: 2,
+      is_active: true,
+    });
+
+  log(`3 stores (Bangalore, Mumbai, Delhi) with warehouses`);
+
+  /* ---- Assign Licenses to Stores --------------------------------------- */
+  const [lifetimePlan] = await db
+    .select({ id: plans.id })
+    .from(plans)
+    .where(eq(plans.slug, "lifetime"))
+    .limit(1);
+
+  if (lifetimePlan) {
+    await db.insert(licenses).values([
+      {
+        tenant_id: businessId,
+        store_id: storeBlr.id,
+        plan_id: lifetimePlan.id,
+        status: "active",
+        billing_mode: "lifetime",
+        billing_cycle: "none",
+        is_current: true,
+      },
+      {
+        tenant_id: businessId,
+        store_id: storeMum.id,
+        plan_id: lifetimePlan.id,
+        status: "active",
+        billing_mode: "lifetime",
+        billing_cycle: "none",
+        is_current: true,
+      },
+      {
+        tenant_id: businessId,
+        store_id: storeDel.id,
+        plan_id: lifetimePlan.id,
+        status: "active",
+        billing_mode: "lifetime",
+        billing_cycle: "none",
+        is_current: true,
+      },
+    ]);
+  }
+
   /* ---- A synthetic context so services can be reused by the seed ------- */
-  const ctx = await buildSeedContext(businessId, provisioned.ownerUserId);
+  const ctx = await buildSeedContext(businessId, provisioned.superAdminUserId, storeBlr.id, whBlr.id);
 
   /* ---------------------------------------------------------------------- */
   step("Seeding catalogue");
@@ -384,7 +540,7 @@ async function main() {
   for (const p of productSeeds) {
     if (p.opening === "0") continue;
     await setOpeningStock(ctx, {
-      warehouseId: provisioned.warehouseId,
+      warehouseId: whBlr.id,
       productId: productIdBySku.get(p.sku)!,
       quantity: p.opening,
       unitCost: p.cost,
@@ -470,7 +626,7 @@ async function main() {
 
   const po = await createPurchaseOrder(ctx, {
     supplierId: supplierIds[0],
-    warehouseId: provisioned.warehouseId,
+    warehouseId: whBlr.id,
     lines: [
       { productId: productIdBySku.get("HH-0001")!, quantity: "60", unitPrice: "118.00" },
       { productId: productIdBySku.get("PC-0002")!, quantity: "48", unitPrice: "132.00" },
@@ -541,7 +697,7 @@ async function main() {
     const sale = await createSale(ctx, {
       customerId:
         plan.customerIndex === null ? null : customerIds[plan.customerIndex],
-      warehouseId: provisioned.warehouseId,
+      warehouseId: whBlr.id,
       lines,
       channel: plan.customerIndex === 1 ? "wholesale" : "pos_counter",
       payments: [
@@ -568,21 +724,21 @@ async function main() {
       {
         tenant_id: businessId,
         event: "LowStockDetected",
-        recipient_roles: ["owner", "manager", "inventory_manager"],
+        recipient_roles: ["super_admin", "manager", "inventory_manager"],
         channels: ["in_app"],
         priority: "high" as const,
       },
       {
         tenant_id: businessId,
         event: "PurchaseOrderCreated",
-        recipient_roles: ["owner", "manager"],
+        recipient_roles: ["super_admin", "manager"],
         channels: ["in_app"],
         priority: "high" as const,
       },
       {
         tenant_id: businessId,
         event: "StockAdjusted",
-        recipient_roles: ["owner", "inventory_manager"],
+        recipient_roles: ["super_admin", "inventory_manager"],
         channels: ["in_app"],
         priority: "medium" as const,
       },
@@ -594,10 +750,10 @@ async function main() {
   step("Adding demo staff");
 
   const staff = [
-    { name: "Vikram Iyer", email: "manager@freshmart.test", role: "manager", code: "EMP-000002" },
-    { name: "Priya Nair", email: "cashier@freshmart.test", role: "cashier", code: "EMP-000003" },
-    { name: "Arun Kulkarni", email: "stock@freshmart.test", role: "inventory_manager", code: "EMP-000004" },
-    { name: "Meera Joshi", email: "accounts@freshmart.test", role: "accountant", code: "EMP-000005" },
+    { name: "Vikram Iyer", email: "manager@mybusiness.test", role: "manager", code: "EMP-000002" },
+    { name: "Priya Nair", email: "cashier@mybusiness.test", role: "cashier", code: "EMP-000003" },
+    { name: "Arun Kulkarni", email: "stock@mybusiness.test", role: "inventory_manager", code: "EMP-000004" },
+    { name: "Meera Joshi", email: "accounts@mybusiness.test", role: "accountant", code: "EMP-000005" },
   ];
 
   const { roles: rolesTable, userRoles } = await import("./schema");
@@ -606,7 +762,7 @@ async function main() {
     .from(rolesTable)
     .where(eq(rolesTable.tenant_id, businessId));
   const roleIdBySlug = new Map(roleRows.map((r) => [r.slug, r.id]));
-  const staffHash = await hashPassword(ownerPassword);
+  const staffHash = await hashPassword(superAdminPassword);
 
   for (const s of staff) {
     const [row] = await db
@@ -620,24 +776,24 @@ async function main() {
         login_enabled: true,
         status: "active",
         joining_date: new Date(),
-        branch_id: provisioned.storeId,
+        store_id: storeBlr.id,
       })
       .returning();
     await db
       .insert(userRoles)
       .values({ user_id: row.id, role_id: roleIdBySlug.get(s.role)! });
   }
-  log(`${staff.length} employees (password same as owner)`);
+  log(`${staff.length} employees (password same as super admin)`);
 
   /* ---------------------------------------------------------------------- */
   console.log("\n─────────────────────────────────────────────");
   console.log(" Seed complete");
   console.log("─────────────────────────────────────────────");
-  console.log(` Owner             ${ownerEmail} / ${ownerPassword}`);
-  console.log(` Manager           manager@freshmart.test`);
-  console.log(` Cashier           cashier@freshmart.test`);
-  console.log(` Inventory         stock@freshmart.test`);
-  console.log(` Accountant        accounts@freshmart.test`);
+  console.log(` Super Admin        ${superAdminEmail} / ${superAdminPassword}`);
+  console.log(` Manager           manager@mybusiness.test`);
+  console.log(` Cashier           cashier@mybusiness.test`);
+  console.log(` Inventory         stock@mybusiness.test`);
+  console.log(` Accountant        accounts@mybusiness.test`);
   console.log("─────────────────────────────────────────────\n");
 
   await finish();
@@ -649,17 +805,19 @@ async function main() {
  */
 async function buildSeedContext(
   businessId: string,
-  ownerUserId: string,
+  superAdminUserId: string,
+  activeStoreId?: string | null,
+  _warehouseId?: string | null,
 ): Promise<BusinessContext> {
   const [business] = await db
     .select()
     .from(tenants)
     .where(eq(tenants.id, businessId));
-  const [user] = await db.select().from(users).where(eq(users.id, ownerUserId));
+  const [user] = await db.select().from(users).where(eq(users.id, superAdminUserId));
   const storeRows = await db
     .select()
-    .from(branches)
-    .where(eq(branches.tenant_id, businessId));
+    .from(stores)
+    .where(eq(stores.tenant_id, businessId));
   const { organizations, roles: rolesTable } = await import("./schema");
   const [organization] = await db
     .select()
@@ -672,14 +830,19 @@ async function buildSeedContext(
   const { resolveEntitlements } = await import("@/lib/authz/entitlements");
   const { ALL_PERMISSION_KEYS } = await import("@/lib/registry");
 
+  // If an explicit active store was provided (e.g. the first seeded demo store),
+  // use it; otherwise fall back to the first store in the list.
+  const resolvedStoreId = activeStoreId ?? storeRows[0]?.id ?? null;
+  const activeStore = storeRows.find((s) => s.id === resolvedStoreId) ?? storeRows[0] ?? null;
+
   return {
     // The seed runs outside a request, so there is no real session row.
     session: {
       id: "00000000-0000-0000-0000-000000000000",
       token_hash: "seed",
       tenant_id: businessId,
-      user_id: ownerUserId,
-      active_branch_id: storeRows[0]?.id ?? null,
+      user_id: superAdminUserId,
+      active_store_id: resolvedStoreId,
       ip_address: null,
       user_agent: null,
       expires_at: new Date(Date.now() + 3_600_000),
@@ -691,12 +854,13 @@ async function buildSeedContext(
     business,
     organization: organization ?? null,
     user,
-    roles: roleRows.filter((r) => r.is_owner),
+    roles: roleRows.filter((r) => r.is_super_admin || r.slug === "super_admin"),
     permissions: new Set(ALL_PERMISSION_KEYS),
-    entitlements: await resolveEntitlements(businessId),
+    entitlements: await resolveEntitlements(businessId, activeStore?.id ?? null, true),
     stores: storeRows,
-    activeStore: storeRows[0] ?? null,
-    isOwner: true,
+    activeStore,
+    isSuperAdmin: true,
+
   };
 }
 

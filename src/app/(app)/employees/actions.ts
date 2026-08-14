@@ -115,7 +115,7 @@ export async function saveEmployee(
         | "temporary",
       department_id: uuid(form, "department_id"),
       designation_id: uuid(form, "designation_id"),
-      branch_id: uuid(form, "branch_id"),
+      store_id: uuid(form, "store_id"),
       login_enabled: loginEnabled,
       status: (str(form, "status") || "active") as
         | "pending"
@@ -438,9 +438,7 @@ export async function saveRole(
         })
         .where(eq(roles.id, id));
 
-      // The Owner role derives its permissions at request time, so storing rows
-      // for it would go stale as new modules are registered.
-      if (!role.is_owner) {
+      if (!role.is_super_admin && role.slug !== "super_admin") {
         await db.delete(rolePermissions).where(eq(rolePermissions.role_id, id));
         if (permissionKeys.length > 0) {
           await db.insert(rolePermissions).values(
@@ -485,7 +483,6 @@ export async function saveRole(
         name,
         description: optionalStr(form, "description"),
         is_system: false,
-        is_owner: false,
         created_by: ctx.user.id,
       })
       .returning();
@@ -526,10 +523,10 @@ export async function deleteRole(roleId: string): Promise<ActionResult> {
       .limit(1);
     if (!role) throw NotFoundError("Role not found.");
 
-    if (role.is_owner) {
+    if (role.is_super_admin || role.slug === "super_admin") {
       throw BusinessRuleError(
-        "The Owner role is required and cannot be deleted.",
-        "OWNER_ROLE_PROTECTED",
+        "The Super Admin role is required and cannot be deleted.",
+        "SUPER_ADMIN_ROLE_PROTECTED",
       );
     }
 

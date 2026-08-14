@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   customers,
   salePayments,
   salesInvoiceItems,
@@ -54,14 +54,14 @@ export default async function InvoiceDetailPage({
   const [row] = await db
     .select({
       invoice: salesInvoices,
-      storeName: branches.name,
+      storeName: stores.name,
       warehouseName: warehouses.name,
       cashierName: users.full_name,
       customerCode: customers.code,
       customerOutstanding: customers.outstanding_balance,
     })
     .from(salesInvoices)
-    .innerJoin(branches, eq(branches.id, salesInvoices.branch_id))
+    .innerJoin(stores, eq(stores.id, salesInvoices.store_id))
     .innerJoin(warehouses, eq(warehouses.id, salesInvoices.warehouse_id))
     .leftJoin(users, eq(users.id, salesInvoices.cashier_id))
     .leftJoin(customers, eq(customers.id, salesInvoices.customer_id))
@@ -104,7 +104,7 @@ export default async function InvoiceDetailPage({
   );
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title={invoice.invoice_number}
         description={`${formatDateTime(invoice.invoice_date)} · ${row.storeName} · ${humanise(invoice.channel)}`}

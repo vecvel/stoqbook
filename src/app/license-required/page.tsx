@@ -36,13 +36,13 @@ export default async function LicenseRequiredPage() {
     archived: {
       title: "Business archived",
       body:
-        "This business has been archived and is no longer trading. All data is retained and the owner can reactivate it from the admin panel.",
+        "This business has been archived and is no longer trading. All data is retained and the super admin can reactivate it from the admin panel.",
       tone: "warning",
     },
     created: {
       title: "Setup not finished",
       body:
-        "Installation setup was started but never completed. The owner can finish it from the admin panel.",
+        "Installation setup was started but never completed. The super admin can finish it from the admin panel.",
       tone: "warning",
     },
   };
@@ -99,7 +99,7 @@ export default async function LicenseRequiredPage() {
           </dl>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-4">
-            {ctx.isOwner ? (
+            {ctx.isSuperAdmin ? (
               <Button asChild variant="accent" size="sm">
                 <Link href="/admin/license">Fix the licence</Link>
               </Button>
@@ -113,7 +113,7 @@ export default async function LicenseRequiredPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Need help? Contact the business owner.
+          Need help? Contact the super admin.
         </p>
       </div>
     </div>

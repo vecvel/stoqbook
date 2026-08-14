@@ -18,7 +18,7 @@ export default async function NewSupplierPage() {
   );
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="New supplier"
         breadcrumbs={[

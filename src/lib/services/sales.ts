@@ -367,7 +367,7 @@ export async function createSale(
       .insert(salesInvoices)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         warehouse_id: input.warehouseId,
         customer_id: customer?.id ?? null,
         pos_session_id: input.posSessionId ?? null,
@@ -477,7 +477,7 @@ export async function createSale(
 
       await tx.insert(salePayments).values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         invoice_id: invoice.id,
         customer_id: customer?.id ?? null,
         method: payment.method,
@@ -771,7 +771,7 @@ export async function recordSalePayment(
 
     await tx.insert(salePayments).values({
       tenant_id: ctx.business.id,
-      branch_id: invoice.branch_id,
+      store_id: invoice.store_id,
       invoice_id: invoice.id,
       customer_id: invoice.customer_id,
       method: input.method,
@@ -794,7 +794,7 @@ export async function recordSalePayment(
     if (invoice.customer_id) {
       await postCustomerLedger(tx, { businessId: ctx.business.id, userId: ctx.user.id }, {
         customerId: invoice.customer_id,
-        storeId: invoice.branch_id,
+        storeId: invoice.store_id,
         amount: mul(input.amount, "-1"),
         kind: "payment",
         referenceType: "sales_invoice",
@@ -879,7 +879,7 @@ export async function createSalesReturn(
     const byId = new Map(items.map((i) => [i.id, i]));
 
     const returnNumber = await nextNumber(ctx.business.id, "sales_return", {
-      storeId: invoice.branch_id,
+      storeId: invoice.store_id,
       client: tx,
     });
 
@@ -937,7 +937,7 @@ export async function createSalesReturn(
       // Returned goods come back as sellable stock, or as damaged when not.
       movements.push({
         productId: item.product_id,
-        storeId: invoice.branch_id,
+        storeId: invoice.store_id,
         warehouseId: invoice.warehouse_id,
         type: "sale_return",
         state: restock ? "available" : "damaged",
@@ -955,7 +955,7 @@ export async function createSalesReturn(
       .insert(salesReturns)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: invoice.branch_id,
+        store_id: invoice.store_id,
         warehouse_id: invoice.warehouse_id,
         invoice_id: invoice.id,
         customer_id: invoice.customer_id,
@@ -992,7 +992,7 @@ export async function createSalesReturn(
     if (isPositive(cashRefund)) {
       await tx.insert(salePayments).values({
         tenant_id: ctx.business.id,
-        branch_id: invoice.branch_id,
+        store_id: invoice.store_id,
         invoice_id: invoice.id,
         customer_id: invoice.customer_id,
         method: input.refundMethod ?? "cash",
@@ -1007,7 +1007,7 @@ export async function createSalesReturn(
     if (isPositive(creditRelief) && invoice.customer_id) {
       await postCustomerLedger(tx, { businessId: ctx.business.id, userId: ctx.user.id }, {
         customerId: invoice.customer_id,
-        storeId: invoice.branch_id,
+        storeId: invoice.store_id,
         amount: mul(creditRelief, "-1"),
         kind: "refund",
         referenceType: "sales_return",
@@ -1125,7 +1125,7 @@ export async function cancelSale(
       { businessId: ctx.business.id, userId: ctx.user.id, allowNegative: true },
       items.map((i) => ({
         productId: i.product_id,
-        storeId: invoice.branch_id,
+        storeId: invoice.store_id,
         warehouseId: invoice.warehouse_id,
         type: "sale_return" as const,
         quantity: dec(String(i.quantity)),
@@ -1141,7 +1141,7 @@ export async function cancelSale(
     if (invoice.customer_id && isPositive(String(invoice.balance_amount))) {
       await postCustomerLedger(tx, { businessId: ctx.business.id, userId: ctx.user.id }, {
         customerId: invoice.customer_id,
-        storeId: invoice.branch_id,
+        storeId: invoice.store_id,
         amount: mul(String(invoice.balance_amount), "-1"),
         kind: "adjustment",
         referenceType: "sales_invoice",

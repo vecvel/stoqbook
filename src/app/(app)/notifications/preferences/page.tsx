@@ -34,7 +34,7 @@ export default async function NotificationPreferencesPage() {
   const quietTo = readString(settings, "notifications.quiet_to", "");
 
   return (
-    <div className="page max-w-3xl">
+    <div className="page">
       <PageHeader
         title="My notification preferences"
         description="Choose how you are told about business events."

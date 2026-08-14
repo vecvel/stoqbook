@@ -35,7 +35,7 @@ export default async function RolesPage() {
       slug: roles.slug,
       description: roles.description,
       isSystem: roles.is_system,
-      isOwner: roles.is_owner,
+      isSuperAdmin: sql<boolean>`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin')`,
       archived: roles.archived,
       permissionCount: db.$count(
         rolePermissions,
@@ -45,12 +45,12 @@ export default async function RolesPage() {
     })
     .from(roles)
     .where(eq(roles.tenant_id, ctx.business.id))
-    .orderBy(sql`${roles.is_owner} desc`, asc(roles.name));
+    .orderBy(sql`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin') desc`, asc(roles.name));
 
   const totalPermissions = ALL_PERMISSION_KEYS.length;
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Roles & permissions"
         description="Permissions are granted through roles only — never directly to a person. A user with several roles gets the union of their permissions."
@@ -70,7 +70,7 @@ export default async function RolesPage() {
 
       <Notice tone="info">
         {totalPermissions} permissions are registered across your enabled modules.
-        The Owner role always holds all of them, so newly added modules become
+        The Super Admin role always holds all of them, so newly added modules become
         usable without editing it.
       </Notice>
 
@@ -101,7 +101,7 @@ export default async function RolesPage() {
                   {row.description ?? "—"}
                 </TD>
                 <TD align="right">
-                  {row.isOwner ? (
+                  {row.isSuperAdmin ? (
                     <span className="font-medium">All ({totalPermissions})</span>
                   ) : (
                     <span>
@@ -117,8 +117,8 @@ export default async function RolesPage() {
                 <TD align="right">
                   {row.archived ? (
                     <Badge variant="soft-neutral">Archived</Badge>
-                  ) : row.isOwner ? (
-                    <Badge variant="soft-accent">Owner</Badge>
+                  ) : row.isSuperAdmin ? (
+                    <Badge variant="soft-accent">Super Admin</Badge>
                   ) : row.isSystem ? (
                     <Badge variant="soft-neutral">Provisioned</Badge>
                   ) : (

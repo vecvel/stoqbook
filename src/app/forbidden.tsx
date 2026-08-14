@@ -22,7 +22,7 @@ export default function Forbidden() {
         <h1 className="mt-4 text-lg font-semibold">You do not have access</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
           Your role does not include this screen. If you need it, ask whoever
-          administers your store or the business owner to add it to your role.
+          administers your store or the super admin to add it to your role.
         </p>
 
         <div className="mt-5 flex items-center justify-center gap-2">

@@ -33,7 +33,7 @@ export default async function BackupPage() {
   const canRestore = hasPermission(ctx, "settings.restore");
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Backup"
         description="Take a copy of everything this business owns."

@@ -5,12 +5,12 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   organizations,
   rolePermissions,
   roles,
   tenants,
-  userBranches,
+  userStores,
   userRoles,
   users,
 } from "@/db/schema";
@@ -25,8 +25,8 @@ import {
 
 export type BusinessRow = typeof tenants.$inferSelect;
 export type UserRow = typeof users.$inferSelect;
-/** A store. The table is named `branches` for schema stability. */
-export type StoreRow = typeof branches.$inferSelect;
+/** A store. */
+export type StoreRow = typeof stores.$inferSelect;
 export type OrganizationRow = typeof organizations.$inferSelect;
 export type RoleRow = typeof roles.$inferSelect;
 
@@ -49,8 +49,8 @@ export interface BusinessContext {
   stores: StoreRow[];
   /** Store currently selected in the session. */
   activeStore: StoreRow | null;
-  /** True when one of the user's roles is the Owner role. */
-  isOwner: boolean;
+  /** True when one of the user's roles is the Super Admin role. */
+  isSuperAdmin: boolean;
 }
 
 export type RequestContext = BusinessContext;
@@ -95,13 +95,15 @@ export const getContext = cache(async (): Promise<BusinessContext | null> => {
       .where(eq(userRoles.user_id, userRow.id));
 
     const assignedRoles = roleRows.map((r) => r.role).filter((r) => !r.archived);
-    const isOwner = assignedRoles.some((r) => r.is_owner);
+    const isSuperAdmin = assignedRoles.some(
+      (r) => r.is_super_admin || r.slug === "super_admin",
+    );
 
     /* Store-scoped roles are resolved after the active store is known, because
        their permissions only count while that store is the one being worked in.
-       Business-wide roles (branch_id null) always count. */
-    const businessWideRoles = assignedRoles.filter((r) => r.branch_id === null);
-    const storeScopedRoles = assignedRoles.filter((r) => r.branch_id !== null);
+       Business-wide roles (store_id null) always count. */
+    const businessWideRoles = assignedRoles.filter((r) => r.store_id === null);
+    const storeScopedRoles = assignedRoles.filter((r) => r.store_id !== null);
 
     const grantsFor = async (roleIds: string[]): Promise<string[]> => {
       if (roleIds.length === 0) return [];
@@ -113,8 +115,8 @@ export const getContext = cache(async (): Promise<BusinessContext | null> => {
     };
 
     let permissions: Set<string>;
-    if (isOwner) {
-      // 04-rbac.md § Business Owner Restrictions: the Owner role implicitly holds
+    if (isSuperAdmin) {
+      // 04-rbac.md § Business Owner Restrictions: the Super Admin role implicitly holds
       // every permission, including administrative ones, so newly registered
       // modules are immediately usable without editing the role.
       permissions = new Set(ALL_PERMISSION_KEYS);
@@ -125,70 +127,69 @@ export const getContext = cache(async (): Promise<BusinessContext | null> => {
       );
     }
 
-    /* --- Entitlements ----------------------------------------------------- */
-
-    const entitlements =
-      businessRow.status === "active"
-        ? await resolveEntitlements(businessRow.id)
-        : UNLICENSED;
-
     /* --- Store scope ------------------------------------------------------ */
 
     const allStores = await db
       .select()
-      .from(branches)
+      .from(stores)
       .where(
         and(
-          eq(branches.tenant_id, businessRow.id),
-          eq(branches.is_active, true),
-          isNull(branches.deleted_at),
+          eq(stores.tenant_id, businessRow.id),
+          eq(stores.is_active, true),
+          isNull(stores.deleted_at),
         ),
       );
 
     let scoped: StoreRow[];
-    if (isOwner || permissions.has("stores.view_all")) {
+    if (isSuperAdmin || permissions.has("stores.view_all")) {
       scoped = allStores;
     } else {
       const extra = await db
-        .select({ branch_id: userBranches.branch_id })
-        .from(userBranches)
-        .where(eq(userBranches.user_id, userRow.id));
+        .select({ store_id: userStores.store_id })
+        .from(userStores)
+        .where(eq(userStores.user_id, userRow.id));
 
-      const allowed = new Set<string>(extra.map((e) => e.branch_id));
-      if (userRow.branch_id) allowed.add(userRow.branch_id);
+      const allowed = new Set<string>(extra.map((e) => e.store_id));
+      if (userRow.store_id) allowed.add(userRow.store_id);
       /* A store-scoped role also implies access to its store — otherwise being
          given "Weekend Supervisor at Andheri" would grant permissions the user
          could never reach, because Andheri would not be in their store list. */
       for (const role of storeScopedRoles) {
-        if (role.branch_id) allowed.add(role.branch_id);
+        if (role.store_id) allowed.add(role.store_id);
       }
       scoped = allStores.filter((b) => allowed.has(b.id));
-      // A user with no store assignment falls back to the default store so the
-      // app stays usable rather than showing an empty shell.
+      // A user with no store assignment falls back to the first available
+      // store so the app stays usable rather than showing an empty shell.
       if (scoped.length === 0) {
-        scoped = allStores.filter((b) => b.is_default);
+        if (allStores.length > 0) scoped = [allStores[0]];
       }
     }
 
     const activeStore =
-      scoped.find((b) => b.id === session.active_branch_id) ??
-      scoped.find((b) => b.is_default) ??
+      scoped.find((b) => b.id === session.active_store_id) ??
       scoped[0] ??
       null;
 
+    /* --- Entitlements ----------------------------------------------------- */
+
+    const entitlements =
+      businessRow.status === "active"
+        ? await resolveEntitlements(businessRow.id, activeStore?.id ?? null, isSuperAdmin)
+        : UNLICENSED;
+
     /* Now that the active store is settled, fold in the permissions of any
        store-scoped role attached to it.
-       The Owner is skipped because they already hold everything, and adding to a
+       The Super Admin is skipped because they already hold everything, and adding to a
        complete set is wasted work. Note the direction: a store-scoped role can
        only ever *add* permissions for that store — it can never remove one granted
        business-wide, because a role is a grant and revocation is not a thing roles
        do. Anything else would make permissions depend on which store you happened
        to be looking at, which nobody could reason about. */
     const activeStoreRoles = activeStore
-      ? storeScopedRoles.filter((r) => r.branch_id === activeStore.id)
+      ? storeScopedRoles.filter((r) => r.store_id === activeStore.id)
       : [];
 
-    if (!isOwner && activeStoreRoles.length > 0) {
+    if (!isSuperAdmin && activeStoreRoles.length > 0) {
       for (const key of await grantsFor(activeStoreRoles.map((r) => r.id))) {
         permissions.add(key);
       }
@@ -207,7 +208,7 @@ export const getContext = cache(async (): Promise<BusinessContext | null> => {
       entitlements,
       stores: scoped,
       activeStore,
-      isOwner,
+      isSuperAdmin,
     };
   } catch (error) {
     if ((error as { code?: string } | null)?.code === "42P01") return null;
@@ -246,7 +247,7 @@ export function hasAnyPermission(
  */
 export function seesAllStores(ctx: RequestContext | null): boolean {
   if (!ctx) return false;
-  return ctx.isOwner || ctx.permissions.has("stores.view_all");
+  return ctx.isSuperAdmin || ctx.permissions.has("stores.view_all");
 }
 
 /**

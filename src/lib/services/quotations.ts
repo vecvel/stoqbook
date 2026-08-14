@@ -214,7 +214,7 @@ export async function saveQuotation(
         .insert(quotations)
         .values({
           tenant_id: ctx.business.id,
-          branch_id: storeId,
+          store_id: storeId,
           customer_id: input.customerId ?? null,
           quotation_number: quotationNumber,
           status: "draft",

@@ -98,7 +98,7 @@ export async function createStockAdjustment(
       .insert(stockAdjustments)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         warehouse_id: input.warehouseId,
         adjustment_number: adjustmentNumber,
         reason: input.reason,
@@ -204,7 +204,7 @@ async function postAdjustment(
     if (bucketed && !isPositive(quantity)) {
       await moveBetweenStates(tx, { businessId: ctx.business.id, userId: ctx.user.id, allowNegative }, {
         productId: item.product_id,
-        storeId: adjustment.branch_id,
+        storeId: adjustment.store_id,
         warehouseId: adjustment.warehouse_id,
         quantity: abs(quantity),
         from: "available",
@@ -225,7 +225,7 @@ async function postAdjustment(
       [
         {
           productId: item.product_id,
-          storeId: adjustment.branch_id,
+          storeId: adjustment.store_id,
           warehouseId: adjustment.warehouse_id,
           type: "adjustment",
           quantity,
@@ -336,7 +336,7 @@ export async function createStockTransfer(
 
   return db.transaction(async (tx) => {
     const transferNumber = await nextNumber(ctx.business.id, "stock_transfer", {
-      storeId: source.branch_id,
+      storeId: source.store_id,
       client: tx,
     });
 
@@ -346,9 +346,9 @@ export async function createStockTransfer(
         tenant_id: ctx.business.id,
         transfer_number: transferNumber,
         status: requiresApproval ? "draft" : "approved",
-        source_branch_id: source.branch_id!,
+        source_store_id: source.store_id!,
         source_warehouse_id: source.id,
-        destination_branch_id: destination.branch_id!,
+        destination_store_id: destination.store_id!,
         destination_warehouse_id: destination.id,
         note: input.note ?? null,
         approved_by: requiresApproval ? null : ctx.user.id,
@@ -407,10 +407,10 @@ async function loadWarehouse(ctx: BusinessContext, id: string) {
   if (!row.is_active) {
     throw BusinessRuleError(`${row.name} is inactive.`, "WAREHOUSE_INACTIVE");
   }
-  if (!row.branch_id) {
+  if (!row.store_id) {
     throw BusinessRuleError(
       `${row.name} is not linked to a store.`,
-      "WAREHOUSE_NO_BRANCH",
+      "WAREHOUSE_NO_STORE",
     );
   }
   return row;
@@ -479,7 +479,7 @@ export async function dispatchStockTransfer(
         [
           {
             productId: item.product_id,
-            storeId: transfer.source_branch_id,
+            storeId: transfer.source_store_id,
             warehouseId: transfer.source_warehouse_id,
             type: "transfer_out",
             quantity: mul(quantity, "-1"),
@@ -492,7 +492,7 @@ export async function dispatchStockTransfer(
           // … and into the destination's in-transit bucket.
           {
             productId: item.product_id,
-            storeId: transfer.destination_branch_id,
+            storeId: transfer.destination_store_id,
             warehouseId: transfer.destination_warehouse_id,
             type: "transfer_out",
             state: "in_transit",
@@ -573,7 +573,7 @@ export async function receiveStockTransfer(
         [
           {
             productId: item.product_id,
-            storeId: transfer.destination_branch_id,
+            storeId: transfer.destination_store_id,
             warehouseId: transfer.destination_warehouse_id,
             type: "transfer_in",
             state: "in_transit",
@@ -586,7 +586,7 @@ export async function receiveStockTransfer(
           },
           {
             productId: item.product_id,
-            storeId: transfer.destination_branch_id,
+            storeId: transfer.destination_store_id,
             warehouseId: transfer.destination_warehouse_id,
             type: "transfer_in",
             quantity,
@@ -608,7 +608,7 @@ export async function receiveStockTransfer(
           [
             {
               productId: item.product_id,
-              storeId: transfer.destination_branch_id,
+              storeId: transfer.destination_store_id,
               warehouseId: transfer.destination_warehouse_id,
               type: "transfer_in",
               state: "pending_inspection",
@@ -621,7 +621,7 @@ export async function receiveStockTransfer(
             },
             {
               productId: item.product_id,
-              storeId: transfer.destination_branch_id,
+              storeId: transfer.destination_store_id,
               warehouseId: transfer.destination_warehouse_id,
               type: "transfer_in",
               state: "in_transit",
@@ -716,7 +716,7 @@ export async function createStockCount(
       .insert(stockCounts)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: storeId,
+        store_id: storeId,
         warehouse_id: input.warehouseId,
         count_number: countNumber,
         name: input.name ?? null,
@@ -862,7 +862,7 @@ export async function approveStockCount(
 
     if (variances.length > 0) {
       adjustmentNumber = await nextNumber(ctx.business.id, "stock_adjustment", {
-        storeId: count.branch_id,
+        storeId: count.store_id,
         client: tx,
       });
 
@@ -870,7 +870,7 @@ export async function approveStockCount(
         .insert(stockAdjustments)
         .values({
           tenant_id: ctx.business.id,
-          branch_id: count.branch_id,
+          store_id: count.store_id,
           warehouse_id: count.warehouse_id,
           adjustment_number: adjustmentNumber,
           reason: "counting_error",

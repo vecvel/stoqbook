@@ -14,11 +14,11 @@ export async function loadEmployeeFormOptions(ctx: BusinessContext) {
         id: roles.id,
         name: roles.name,
         description: roles.description,
-        isOwner: roles.is_owner,
+        isSuperAdmin: sql<boolean>`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin')`,
       })
       .from(roles)
       .where(eq(roles.tenant_id, ctx.business.id))
-      .orderBy(sql`${roles.is_owner} desc`, asc(roles.name)),
+      .orderBy(sql`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin') desc`, asc(roles.name)),
 
     db
       .select({ id: departments.id, name: departments.name })
@@ -38,7 +38,7 @@ export async function loadEmployeeFormOptions(ctx: BusinessContext) {
     roles: roleRows,
     departments: departmentRows,
     designations: designationRows,
-    // Only branches the acting user can see may be assigned.
-    branches: ctx.stores.map((b) => ({ id: b.id, name: b.name })),
+    // Only stores the acting user can see may be assigned.
+    stores: ctx.stores.map((b) => ({ id: b.id, name: b.name })),
   };
 }

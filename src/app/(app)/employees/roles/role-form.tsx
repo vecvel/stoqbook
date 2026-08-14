@@ -50,7 +50,7 @@ export function RoleForm({
     id?: string;
     name: string;
     description: string;
-    isOwner: boolean;
+    isSuperAdmin: boolean;
     isSystem: boolean;
     granted: string[];
   };
@@ -132,9 +132,9 @@ export function RoleForm({
           </Field>
         </FieldRow>
 
-        {role.isOwner ? (
+        {role.isSuperAdmin ? (
           <p className="rounded-xs border border-accent/40 bg-accent/10 px-3 py-2 text-xs">
-            The Owner role always holds every tenant permission, including those
+            The Super Admin role always holds every tenant permission, including those
             added by future modules. Its permission list is derived at request
             time and cannot be edited.
           </p>
@@ -146,7 +146,7 @@ export function RoleForm({
         ) : null}
       </FormSection>
 
-      {!role.isOwner ? (
+      {!role.isSuperAdmin ? (
         <>
           {/* Hidden inputs carry the selection; the checkboxes are display only. */}
           {[...granted].map((key) => (

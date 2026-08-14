@@ -7,6 +7,8 @@ import { featureFlags, licenses, plans } from "@/db/schema";
 import {
   CORE_MODULE_SLUGS,
   DEFAULT_FEATURE_SLUGS,
+  MODULE_SLUGS,
+  ALL_FEATURES,
   resolveModuleDependencies,
 } from "@/lib/registry";
 
@@ -44,6 +46,18 @@ export const UNLICENSED: Entitlements = {
   modules: new Set(CORE_MODULE_SLUGS),
   features: new Set(DEFAULT_FEATURE_SLUGS),
   limits: {},
+  flags: new Set(),
+};
+
+export const UNLIMITED_ENTITLEMENTS: Entitlements = {
+  license: null,
+  plan: null,
+  isValid: true,
+  invalidReason: null,
+  daysRemaining: null,
+  modules: new Set(MODULE_SLUGS),
+  features: new Set(ALL_FEATURES.map((f) => f.slug)),
+  limits: {}, // missing limits means null (unlimited) via `limitFor`
   flags: new Set(),
 };
 
@@ -98,12 +112,23 @@ function applyOverrides(
 
 export async function resolveEntitlements(
   businessId: string,
+  storeId: string | null,
+  isSuperAdmin: boolean,
 ): Promise<Entitlements> {
+  if (isSuperAdmin) return UNLIMITED_ENTITLEMENTS;
+  if (!storeId) return UNLICENSED;
+
   const [row] = await db
     .select({ license: licenses, plan: plans })
     .from(licenses)
     .innerJoin(plans, eq(plans.id, licenses.plan_id))
-    .where(and(eq(licenses.tenant_id, businessId), eq(licenses.is_current, true)))
+    .where(
+      and(
+        eq(licenses.tenant_id, businessId),
+        eq(licenses.store_id, storeId),
+        eq(licenses.is_current, true),
+      ),
+    )
     .limit(1);
 
   if (!row) return UNLICENSED;

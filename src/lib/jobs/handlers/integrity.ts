@@ -85,7 +85,7 @@ export async function checkIntegrity(businessId: string): Promise<DriftReport[]>
       select count(*)::int as n from (
         select 1 from settings
         where tenant_id = ${businessId}
-        group by scope, tenant_id, branch_id, warehouse_id, user_id, key
+        group by scope, tenant_id, store_id, warehouse_id, user_id, key
         having count(*) > 1
       ) d
     `)

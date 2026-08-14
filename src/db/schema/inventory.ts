@@ -30,7 +30,7 @@ import {
   transferStatusEnum,
 } from "./_shared";
 import { tenants } from "./admin";
-import { branches, users, warehouses } from "./organization";
+import { stores, users, warehouses } from "./organization";
 import { products } from "./catalog";
 
 /* ------------------------------------------------------------------------- */
@@ -77,9 +77,9 @@ export const inventoryLevels = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "cascade" }),
@@ -110,7 +110,7 @@ export const inventoryLevels = pgTable(
       t.warehouse_id,
       t.product_id,
     ),
-    index("inventory_levels_tenant_branch_idx").on(t.tenant_id, t.branch_id),
+    index("inventory_levels_tenant_store_idx").on(t.tenant_id, t.store_id),
     index("inventory_levels_product_idx").on(t.product_id),
   ],
 );
@@ -126,9 +126,9 @@ export const inventoryMovements = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -195,9 +195,9 @@ export const stockAdjustments = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -267,15 +267,15 @@ export const stockTransfers = pgTable(
     transfer_number: text("transfer_number").notNull(),
     status: transferStatusEnum("status").notNull().default("draft"),
 
-    source_branch_id: uuid("source_branch_id")
+    source_store_id: uuid("source_store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     source_warehouse_id: uuid("source_warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
-    destination_branch_id: uuid("destination_branch_id")
+    destination_store_id: uuid("destination_store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     destination_warehouse_id: uuid("destination_warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -335,9 +335,9 @@ export const stockCounts = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -404,9 +404,9 @@ export const stockReservations = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),

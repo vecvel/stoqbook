@@ -25,7 +25,7 @@ export default async function NumberingPage() {
       and(
         eq(numberSequences.tenant_id, ctx.business.id),
         // Only tenant-wide sequences are edited here.
-        isNull(numberSequences.branch_id),
+        isNull(numberSequences.store_id),
       ),
     )
     .orderBy(asc(numberSequences.document_type));
@@ -34,7 +34,7 @@ export default async function NumberingPage() {
     DOCUMENT_TYPES.find((d) => d.type === type)?.label ?? humanise(type);
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Document numbering"
         description="Prefixes, padding and reset rules for every document type."

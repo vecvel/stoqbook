@@ -45,7 +45,7 @@ export default async function FeatureFlagsPage() {
   }));
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Feature flags"
         description="Kill switches for this installation, independent of the licence. A flag can only remove access, never grant something the licence does not include."

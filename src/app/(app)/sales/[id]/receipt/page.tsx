@@ -4,7 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   organizations,
   salePayments,
   salesInvoiceItems,
@@ -39,16 +39,16 @@ export default async function ReceiptPage({
   const [row] = await db
     .select({
       invoice: salesInvoices,
-      storeName: branches.name,
-      storePhone: branches.phone,
-      storeAddress: branches.address_line1,
-      storeCity: branches.city,
+      storeName: stores.name,
+      storePhone: stores.phone,
+      storeAddress: stores.address_line1,
+      storeCity: stores.city,
       cashierName: users.full_name,
       orgName: organizations.name,
       orgTaxNumber: organizations.tax_number,
     })
     .from(salesInvoices)
-    .innerJoin(branches, eq(branches.id, salesInvoices.branch_id))
+    .innerJoin(stores, eq(stores.id, salesInvoices.store_id))
     .leftJoin(users, eq(users.id, salesInvoices.cashier_id))
     .leftJoin(organizations, eq(organizations.tenant_id, salesInvoices.tenant_id))
     .where(
@@ -70,7 +70,7 @@ export default async function ReceiptPage({
       .from(salePayments)
       .where(eq(salePayments.invoice_id, id))
       .orderBy(asc(salePayments.paid_at)),
-    loadSettings({ businessId: ctx.business.id, storeId: invoice.branch_id }),
+    loadSettings({ businessId: ctx.business.id, storeId: invoice.store_id }),
   ]);
 
   const currency = ctx.business.currency;

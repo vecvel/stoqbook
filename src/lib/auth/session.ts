@@ -19,7 +19,7 @@ export interface CreateSessionInput {
   /** The single installed business. Stored in `tenant_id` for schema stability. */
   businessId?: string | null;
   userId?: string | null;
-  /** Store selected at sign-in. Stored in `active_branch_id`. */
+  /** Store selected at sign-in. Stored in `active_store_id`. */
   activeStoreId?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
@@ -35,7 +35,7 @@ export async function createSession(input: CreateSessionInput): Promise<string> 
     token_hash: hashToken(token),
     tenant_id: input.businessId ?? null,
     user_id: input.userId ?? null,
-    active_branch_id: input.activeStoreId ?? null,
+    active_store_id: input.activeStoreId ?? null,
     ip_address: input.ipAddress ?? null,
     user_agent: input.userAgent ?? null,
     expires_at: expiresAt,
@@ -82,7 +82,7 @@ export async function setActiveStore(
 ): Promise<void> {
   await db
     .update(sessions)
-    .set({ active_branch_id: storeId, updated_at: new Date() })
+    .set({ active_store_id: storeId, updated_at: new Date() })
     .where(eq(sessions.id, sessionId));
 }
 

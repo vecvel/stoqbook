@@ -28,7 +28,7 @@ import {
   timestamps,
 } from "./_shared";
 import { tenants } from "./admin";
-import { branches, users, warehouses } from "./organization";
+import { stores, users, warehouses } from "./organization";
 
 /* ------------------------------------------------------------------------- */
 /* Sessions                                                                  */
@@ -48,7 +48,7 @@ export const sessions = pgTable(
     }),
 
     /** Store the user is currently operating in. */
-    active_branch_id: uuid("active_branch_id").references(() => branches.id, {
+    active_store_id: uuid("active_store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
 
@@ -104,7 +104,7 @@ export const settings = pgTable(
     tenant_id: uuid("tenant_id").references(() => tenants.id, {
       onDelete: "cascade",
     }),
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "cascade",
     }),
     warehouse_id: uuid("warehouse_id").references(() => warehouses.id, {
@@ -127,11 +127,11 @@ export const settings = pgTable(
     index("settings_module_idx").on(t.module_slug),
     /* A constraint rather than an index, because only the constraint builder
        exposes NULLS NOT DISTINCT — which is essential here. A business-scoped
-       setting leaves branch_id, warehouse_id and user_id null, and under
+       setting leaves store_id, warehouse_id and user_id null, and under
        Postgres's default NULLS DISTINCT two such rows would both be allowed,
        letting the same key exist twice and making which value wins arbitrary. */
     unique("settings_unique_key")
-      .on(t.scope, t.tenant_id, t.branch_id, t.warehouse_id, t.user_id, t.key)
+      .on(t.scope, t.tenant_id, t.store_id, t.warehouse_id, t.user_id, t.key)
       .nullsNotDistinct(),
   ],
 );
@@ -167,8 +167,8 @@ export const numberSequences = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    /** Per-branch sequences are supported; null = tenant-wide. */
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    /** Per-store sequences are supported; null = tenant-wide. */
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "cascade",
     }),
 
@@ -189,7 +189,7 @@ export const numberSequences = pgTable(
   (t) => [
     uniqueIndex("number_sequences_key").on(
       t.tenant_id,
-      t.branch_id,
+      t.store_id,
       t.document_type,
     ),
   ],
@@ -246,7 +246,7 @@ export const notificationRules = pgTable(
       .notNull()
       .default(["in_app"]),
     priority: notificationPriorityEnum("priority").notNull().default("medium"),
-    /** e.g. { "amount_gt": 50000, "branch_id": "…" } */
+    /** e.g. { "amount_gt": 50000, "store_id": "…" } */
     conditions: jsonb("conditions")
       .$type<Record<string, unknown>>()
       .notNull()
@@ -270,7 +270,7 @@ export const notifications = pgTable(
     user_id: uuid("user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
 

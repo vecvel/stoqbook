@@ -2362,8 +2362,8 @@ const admin: ModuleDef = {
           feature: "admin.panel",
         },
         {
-          label: "Licence",
-          href: "/admin/license",
+          label: "Store Licenses",
+          href: "/admin/stores",
           permission: "admin.license_manage",
           feature: "admin.licensing",
         },

@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import {
   auditLogs,
-  branches,
+  stores,
   products,
   salesInvoices,
   users,
@@ -42,8 +42,8 @@ export default async function AdminOverviewPage() {
   const [counts, recentEvents, queue] = await Promise.all([
     db
       .select({
-        stores: sql<number>`(select count(*)::int from ${branches}
-          where ${branches.tenant_id} = ${businessId} and ${branches.deleted_at} is null)`,
+        stores: sql<number>`(select count(*)::int from ${stores}
+          where ${stores.tenant_id} = ${businessId} and ${stores.deleted_at} is null)`,
         users: sql<number>`(select count(*)::int from ${users}
           where ${users.tenant_id} = ${businessId} and ${users.deleted_at} is null)`,
         products: sql<number>`(select count(*)::int from ${products}
@@ -59,7 +59,7 @@ export default async function AdminOverviewPage() {
           where ${salesInvoices.tenant_id} = ${businessId}
             and ${salesInvoices.status} <> 'cancelled')`,
       })
-      .from(branches)
+      .from(stores)
       .limit(1),
 
     db
@@ -81,13 +81,6 @@ export default async function AdminOverviewPage() {
   ]);
 
   const totals = counts[0];
-  const licence = entitlements.license;
-  const plan = entitlements.plan;
-
-  const overrideCount =
-    Object.keys(licence?.module_overrides ?? {}).length +
-    Object.keys(licence?.feature_overrides ?? {}).length +
-    Object.keys(licence?.limit_overrides ?? {}).length;
 
   return (
     <div className="page">
@@ -97,59 +90,28 @@ export default async function AdminOverviewPage() {
         actions={
           <>
             <StatusBadge status={ctx.business.status} />
-            <Button asChild variant="outline" size="sm">
-              <Link href="/admin/license">Manage licence</Link>
-            </Button>
-            <BusinessStatusActions
-              businessName={ctx.business.name}
-              status={ctx.business.status}
-            />
-          </>
-        }
-      />
-
-      {ctx.business.status === "suspended" ? (
-        <Notice tone="danger" title="This business is suspended">
-          {ctx.business.suspended_reason ?? "No reason was recorded."} Everyone
-          except this panel is locked out until it is reactivated. All data is
-          intact.
-        </Notice>
-      ) : ctx.business.status === "archived" ? (
-        <Notice tone="warning" title="This business is archived">
-          The installation is read-only. Reactivate it to resume trading — no
-          data has been removed.
-        </Notice>
-      ) : !entitlements.isValid ? (
-        <Notice tone="danger" title="Licence not active">
-          {entitlements.invalidReason}{" "}
-          <Link href="/admin/license" className="underline">
-            Fix the licence
-          </Link>{" "}
-          to restore access to operational screens.
-        </Notice>
-      ) : null}
-
-      <StatGrid>
-        <StatTile
-          label="Plan"
-          value={plan?.name ?? "None"}
-          sublabel={licence ? humanise(licence.billing_mode) : "No licence"}
-          tone="accent"
-          icon="KeyRound"
-          href="/admin/license"
+        <BusinessStatusActions
+          businessName={ctx.business.name}
+          status={ctx.business.status}
         />
-        <StatTile
-          label="Licence"
-          value={licence ? humanise(licence.status) : "—"}
-          sublabel={
-            entitlements.daysRemaining === null
-              ? "Never expires"
-              : `${entitlements.daysRemaining} days left`
-          }
-          tone={entitlements.isValid ? "success" : "danger"}
-          icon="ShieldCheck"
-          href="/admin/license"
-        />
+      </>
+    }
+  />
+
+    {ctx.business.status === "suspended" ? (
+      <Notice tone="danger" title="This business is suspended">
+        {ctx.business.suspended_reason ?? "No reason was recorded."} Everyone
+        except this panel is locked out until it is reactivated. All data is
+        intact.
+      </Notice>
+    ) : ctx.business.status === "archived" ? (
+      <Notice tone="warning" title="This business is archived">
+        The installation is read-only. Reactivate it to resume trading — no
+        data has been removed.
+      </Notice>
+    ) : null}
+
+    <StatGrid>
         <StatTile
           label="Stores"
           value={String(totals?.stores ?? 0)}
@@ -236,10 +198,6 @@ export default async function AdminOverviewPage() {
             label="Modules enabled"
             value={`${entitlements.modules.size} of ${ALL_MODULES.length}`}
           />
-          <Detail
-            label="Licence overrides"
-            value={overrideCount > 0 ? String(overrideCount) : "None"}
-          />
         </section>
 
         <section className="overflow-hidden rounded-xs border border-border bg-card">
@@ -253,9 +211,9 @@ export default async function AdminOverviewPage() {
               hint="Delivery, schedules and ledger checks"
             />
             <AdminLink
-              href="/admin/license"
-              label="Licence"
-              hint="Plan, expiry, overrides and history"
+              href="/admin/stores"
+              label="Store Licenses"
+              hint="Manage plans and licenses across stores"
             />
             <AdminLink
               href="/admin/plans"

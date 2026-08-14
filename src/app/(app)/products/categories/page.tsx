@@ -95,7 +95,7 @@ export default async function CategoriesPage() {
   }));
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Categories"
         description="Organise the catalogue. Nesting is unlimited; products belong to exactly one category."

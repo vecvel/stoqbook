@@ -12,7 +12,7 @@ import { SETTING_BY_KEY, SETTING_DEFAULTS } from "@/lib/registry";
  * warehouse -> user. The most specific value present wins; registry defaults
  * back-stop everything (17-settings.md § Settings Hierarchy).
  *
- * The `branch` scope value and `branch_id` column name identify a store — the
+ * The `branch` scope value and `store_id` column name identify a store — the
  * database keeps the structural names, everything above it says "store".
  */
 
@@ -26,7 +26,7 @@ export interface SettingScopeRef {
 /** Specificity ranking — higher wins. */
 const SCOPE_RANK: Record<string, number> = {
   business: 0,
-  branch: 1,
+  store: 1,
   warehouse: 2,
   user: 3,
 };
@@ -47,8 +47,8 @@ export const loadSettings = cache(
           or(isNull(settings.tenant_id), eq(settings.tenant_id, ref.businessId)),
           // Only rows matching this scope chain are relevant.
           or(
-            isNull(settings.branch_id),
-            ref.storeId ? eq(settings.branch_id, ref.storeId) : isNull(settings.branch_id),
+            isNull(settings.store_id),
+            ref.storeId ? eq(settings.store_id, ref.storeId) : isNull(settings.store_id),
           ),
           or(
             isNull(settings.warehouse_id),
@@ -126,7 +126,7 @@ export async function writeSetting(
       and(
         eq(settings.scope, scope),
         eq(settings.tenant_id, ref.businessId),
-        storeId ? eq(settings.branch_id, storeId) : isNull(settings.branch_id),
+        storeId ? eq(settings.store_id, storeId) : isNull(settings.store_id),
         warehouseId
           ? eq(settings.warehouse_id, warehouseId)
           : isNull(settings.warehouse_id),
@@ -145,7 +145,7 @@ export async function writeSetting(
     await client.insert(settings).values({
       scope,
       tenant_id: ref.businessId,
-      branch_id: storeId,
+      store_id: storeId,
       warehouse_id: warehouseId,
       user_id: userId,
       module_slug: def?.moduleSlug ?? null,

@@ -39,7 +39,7 @@ export default async function NewTransferPage() {
   }
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="New stock transfer"
         description="Stock leaves the source on dispatch and becomes sellable at the destination on receipt."

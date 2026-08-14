@@ -91,7 +91,7 @@ export default async function ShiftsPage() {
     );
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Shifts"
         description="Working patterns used to judge lateness and to net off unpaid breaks when attendance is recorded."

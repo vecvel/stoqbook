@@ -77,7 +77,7 @@ export default async function SecurityPage() {
   const failures = history.filter((h) => h.outcome !== "success").length;
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Security"
         description="Password policy, lockout behaviour and session lifetime, plus the sign-in audit trail."
@@ -175,7 +175,7 @@ export default async function SecurityPage() {
                     <TD mono className="text-muted-foreground">
                       {entry.ip ?? "—"}
                     </TD>
-                    <TD className="max-w-[280px] truncate text-[11px] text-muted-foreground">
+                    <TD className="max-w-70 truncate text-[11px] text-muted-foreground">
                       {entry.userAgent ?? "—"}
                     </TD>
                   </TR>

@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { branches, inventoryLevels, users, warehouses } from "@/db/schema";
+import { stores, inventoryLevels, users, warehouses } from "@/db/schema";
 import { limitFor } from "@/lib/authz/entitlements";
 import { requirePermission } from "@/lib/authz/guard";
 import Link from "next/link";
@@ -24,39 +24,38 @@ export default async function StoresPage() {
 
   const rows = await db
     .select({
-      id: branches.id,
-      code: branches.code,
-      name: branches.name,
-      city: branches.city,
-      phone: branches.phone,
-      email: branches.email,
-      documentPrefix: branches.document_prefix,
-      isDefault: branches.is_default,
-      isActive: branches.is_active,
-      addressLine1: branches.address_line1,
-      state: branches.state,
-      postalCode: branches.postal_code,
+      id: stores.id,
+      code: stores.code,
+      name: stores.name,
+      city: stores.city,
+      phone: stores.phone,
+      email: stores.email,
+      documentPrefix: stores.document_prefix,
+      isActive: stores.is_active,
+      addressLine1: stores.address_line1,
+      state: stores.state,
+      postalCode: stores.postal_code,
       warehouseCount: db.$count(
         warehouses,
         and(
-          eq(warehouses.branch_id, branches.id),
+          eq(warehouses.store_id, stores.id),
           isNull(warehouses.deleted_at),
         ),
       ),
       staffCount: db.$count(
         users,
-        and(eq(users.branch_id, branches.id), isNull(users.deleted_at)),
+        and(eq(users.store_id, stores.id), isNull(users.deleted_at)),
       ),
       stockLines: db.$count(
         inventoryLevels,
-        eq(inventoryLevels.branch_id, branches.id),
+        eq(inventoryLevels.store_id, stores.id),
       ),
     })
-    .from(branches)
+    .from(stores)
     .where(
-      and(eq(branches.tenant_id, ctx.business.id), isNull(branches.deleted_at)),
+      and(eq(stores.tenant_id, ctx.business.id), isNull(stores.deleted_at)),
     )
-    .orderBy(asc(branches.name));
+    .orderBy(asc(stores.name));
 
   const limit = limitFor(ctx.entitlements, "max_stores");
   const atLimit = limit !== null && rows.length >= limit;
@@ -75,19 +74,14 @@ export default async function StoresPage() {
       document_prefix: row.documentPrefix ?? "",
       is_active: row.isActive,
     },
-    deleteBlockedReason: row.isDefault
-      ? "This is the default store"
-      : row.stockLines > 0
+    deleteBlockedReason: row.stockLines > 0
         ? `Holds ${row.stockLines} stock record${row.stockLines === 1 ? "" : "s"}`
         : row.staffCount > 0
           ? `${row.staffCount} employee${row.staffCount === 1 ? "" : "s"} assigned`
           : undefined,
     cells: {
       name: (
-        <span className="flex items-center gap-2">
-          <span className="font-medium">{row.name}</span>
-          {row.isDefault ? <Badge variant="soft-neutral">Default</Badge> : null}
-        </span>
+        <span className="font-medium">{row.name}</span>
       ),
       code: <span className="font-mono text-xs">{row.code}</span>,
       location: (

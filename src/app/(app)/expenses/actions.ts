@@ -102,7 +102,7 @@ export async function saveExpense(
         .insert(expenses)
         .values({
           tenant_id: ctx.business.id,
-          branch_id: ctx.activeStore.id,
+          store_id: ctx.activeStore.id,
           expense_number: expenseNumber,
           ...values,
           approval_status: needsApproval ? "pending" : "not_required",

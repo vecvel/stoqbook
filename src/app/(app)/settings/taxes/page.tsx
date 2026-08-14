@@ -42,7 +42,7 @@ export default async function TaxSettingsPage() {
   const defaultGroup = rows.find((r) => r.is_default);
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Taxes"
         description="How tax is registered, calculated and shown. The rates themselves live in the product tax groups."

@@ -2,7 +2,7 @@
  * Organisation entities — everything the business owns structurally:
  * its profile, its store network, and its workforce/RBAC.
  *
- * `branches` is the store table: the column name is kept for schema stability
+ * `stores` is the store table: the column name is kept for schema stability
  * while the domain language above the database layer says "store".
  */
 import {
@@ -72,11 +72,11 @@ export const organizations = pgTable(
 );
 
 /* ------------------------------------------------------------------------- */
-/* Stores (table name `branches` for schema stability)                       */
+/* Stores (table name `stores` for schema stability)                       */
 /* ------------------------------------------------------------------------- */
 
-export const branches = pgTable(
-  "branches",
+export const stores = pgTable(
+  "stores",
   {
     id: pk(),
     tenant_id: uuid("tenant_id")
@@ -98,12 +98,11 @@ export const branches = pgTable(
     postal_code: text("postal_code"),
     country: text("country"),
 
-    /** Document numbering prefix override for this branch. */
+    /** Document numbering prefix override for this store. */
     document_prefix: text("document_prefix"),
     timezone: text("timezone"),
     currency: text("currency"),
 
-    is_default: boolean("is_default").notNull().default(false),
     is_active: boolean("is_active").notNull().default(true),
 
     ...timestamps,
@@ -111,8 +110,8 @@ export const branches = pgTable(
     ...softDelete,
   },
   (t) => [
-    uniqueIndex("branches_tenant_code_key").on(t.tenant_id, t.code),
-    index("branches_tenant_idx").on(t.tenant_id),
+    uniqueIndex("stores_tenant_code_key").on(t.tenant_id, t.code),
+    index("stores_tenant_idx").on(t.tenant_id),
   ],
 );
 
@@ -127,8 +126,8 @@ export const warehouses = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    /** Primary branch this warehouse serves; it may still serve others. */
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    /** Primary store this warehouse serves; it may still serve others. */
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
 
@@ -145,7 +144,8 @@ export const warehouses = pgTable(
     /** Rack / bin / zone layout metadata. */
     layout: jsonb("layout").$type<Record<string, unknown>>().default({}),
 
-    is_default: boolean("is_default").notNull().default(false),
+    /** Lower value = higher priority in warehouse pickers. */
+    sort_order: integer("sort_order").notNull().default(0),
     is_active: boolean("is_active").notNull().default(true),
 
     ...timestamps,
@@ -154,7 +154,7 @@ export const warehouses = pgTable(
   },
   (t) => [
     uniqueIndex("warehouses_tenant_code_key").on(t.tenant_id, t.code),
-    index("warehouses_tenant_branch_idx").on(t.tenant_id, t.branch_id),
+    index("warehouses_tenant_store_idx").on(t.tenant_id, t.store_id),
   ],
 );
 
@@ -210,7 +210,7 @@ export const roles = pgTable(
      * for their own shop without it leaking into anyone else's. Business-wide
      * roles are unaffected and remain the norm.
      */
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "cascade",
     }),
     slug: text("slug").notNull(),
@@ -218,8 +218,8 @@ export const roles = pgTable(
     description: text("description"),
     /** Provisioned by the setup wizard; editable, not deletable. */
     is_system: boolean("is_system").notNull().default(false),
-    /** The Owner role holds every permission implicitly (04-rbac.md). */
-    is_owner: boolean("is_owner").notNull().default(false),
+    /** The Super Admin role holds every permission implicitly (04-rbac.md). */
+    is_super_admin: boolean("is_super_admin").notNull().default(false),
     archived: boolean("archived").notNull().default(false),
     ...timestamps,
     ...actorColumns,
@@ -228,13 +228,13 @@ export const roles = pgTable(
     /* Scoped by store as well as slug, with NULLS NOT DISTINCT so the
        business-wide row participates: two stores may each define their own
        "supervisor", and neither collides with a business-wide one. Without
-       `nullsNotDistinct` the NULL branch_id rows would be mutually distinct and
+       `nullsNotDistinct` the NULL store_id rows would be mutually distinct and
        the same business-wide slug could be created twice. */
     unique("roles_tenant_scope_slug_key")
-      .on(t.tenant_id, t.branch_id, t.slug)
+      .on(t.tenant_id, t.store_id, t.slug)
       .nullsNotDistinct(),
     index("roles_tenant_idx").on(t.tenant_id),
-    index("roles_branch_idx").on(t.branch_id),
+    index("roles_store_idx").on(t.store_id),
   ],
 );
 
@@ -294,8 +294,8 @@ export const users = pgTable(
     designation_id: uuid("designation_id").references(() => designations.id, {
       onDelete: "set null",
     }),
-    /** Primary branch. Additional access lives in user_branches. */
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    /** Primary store. Additional access lives in user_stores. */
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
 
@@ -337,21 +337,21 @@ export const userRoles = pgTable(
   (t) => [primaryKey({ columns: [t.user_id, t.role_id] })],
 );
 
-/** Additional branch access beyond the primary branch. */
-export const userBranches = pgTable(
-  "user_branches",
+/** Additional store access beyond the primary store. */
+export const userStores = pgTable(
+  "user_stores",
   {
     user_id: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "cascade" }),
+      .references(() => stores.id, { onDelete: "cascade" }),
     created_at: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.user_id, t.branch_id] })],
+  (t) => [primaryKey({ columns: [t.user_id, t.store_id] })],
 );
 
 /* ------------------------------------------------------------------------- */
@@ -386,7 +386,7 @@ export const attendance = pgTable(
     user_id: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
     shift_id: uuid("shift_id").references(() => shifts.id, {

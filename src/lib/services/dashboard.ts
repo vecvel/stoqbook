@@ -34,8 +34,8 @@ import {
 /**
  * Widget data providers.
  *
- * Every query is scoped by tenant and, where the table is branch-aware, by the
- * active branch — so a branch-restricted user never sees another branch's
+ * Every query is scoped by tenant and, where the table is store-aware, by the
+ * active store — so a store-restricted user never sees another store's
  * numbers (15-dashboard.md § Business Rules).
  */
 
@@ -127,7 +127,7 @@ export async function salesSummary(scope: WidgetScope): Promise<SalesSummary> {
   const base = (from: Date, to: Date) =>
     and(
       eq(salesInvoices.tenant_id, scope.ctx.business.id),
-      scope.storeId ? eq(salesInvoices.branch_id, scope.storeId) : undefined,
+      scope.storeId ? eq(salesInvoices.store_id, scope.storeId) : undefined,
       gte(salesInvoices.invoice_date, from),
       lt(salesInvoices.invoice_date, to),
       // Cancelled invoices are excluded from revenue.
@@ -210,7 +210,7 @@ export async function salesTrend(
     .where(
       and(
         eq(salesInvoices.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(salesInvoices.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(salesInvoices.store_id, scope.storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         sql`${salesInvoices.status} <> 'cancelled'`,
       ),
@@ -257,7 +257,7 @@ export async function topProducts(
     .where(
       and(
         eq(salesInvoices.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(salesInvoices.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(salesInvoices.store_id, scope.storeId) : undefined,
         gte(salesInvoices.invoice_date, scope.period.from),
         sql`${salesInvoices.status} <> 'cancelled'`,
       ),
@@ -303,7 +303,7 @@ export async function recentSales(
     .where(
       and(
         eq(salesInvoices.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(salesInvoices.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(salesInvoices.store_id, scope.storeId) : undefined,
       ),
     )
     .orderBy(desc(salesInvoices.invoice_date))
@@ -365,7 +365,7 @@ export async function paymentMix(scope: WidgetScope): Promise<PaymentMixSlice[]>
     .where(
       and(
         eq(salePayments.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(salePayments.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(salePayments.store_id, scope.storeId) : undefined,
         gte(salePayments.paid_at, scope.period.from),
         eq(salePayments.is_refund, false),
       ),
@@ -412,7 +412,7 @@ export async function inventorySummary(
 ): Promise<InventorySummary> {
   const scoped = and(
     eq(inventoryLevels.tenant_id, scope.ctx.business.id),
-    scope.storeId ? eq(inventoryLevels.branch_id, scope.storeId) : undefined,
+    scope.storeId ? eq(inventoryLevels.store_id, scope.storeId) : undefined,
   );
 
   const [totals] = await db
@@ -474,7 +474,7 @@ export async function purchaseSummary(scope: WidgetScope): Promise<{
     .where(
       and(
         eq(purchaseOrders.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(purchaseOrders.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(purchaseOrders.store_id, scope.storeId) : undefined,
         eq(purchaseOrders.approval_status, "pending"),
       ),
     );
@@ -485,7 +485,7 @@ export async function purchaseSummary(scope: WidgetScope): Promise<{
     .where(
       and(
         eq(purchaseOrders.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(purchaseOrders.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(purchaseOrders.store_id, scope.storeId) : undefined,
         sql`${purchaseOrders.status} in ('approved','sent','partially_received')`,
       ),
     );
@@ -536,7 +536,7 @@ export async function awaitingReceipt(
     .where(
       and(
         eq(purchaseOrders.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(purchaseOrders.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(purchaseOrders.store_id, scope.storeId) : undefined,
         sql`${purchaseOrders.status} in ('approved','sent','partially_received')`,
       ),
     )
@@ -673,7 +673,7 @@ export async function attendanceToday(
     .where(
       and(
         eq(attendance.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(attendance.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(attendance.store_id, scope.storeId) : undefined,
         gte(attendance.work_date, today),
       ),
     )
@@ -696,7 +696,7 @@ export async function expenseTotal(scope: WidgetScope): Promise<string> {
     .where(
       and(
         eq(expenses.tenant_id, scope.ctx.business.id),
-        scope.storeId ? eq(expenses.branch_id, scope.storeId) : undefined,
+        scope.storeId ? eq(expenses.store_id, scope.storeId) : undefined,
         gte(expenses.expense_date, scope.period.from),
       ),
     );
@@ -753,7 +753,7 @@ export async function unpaidPurchaseInvoices(
       and(
         eq(purchaseInvoices.tenant_id, scope.ctx.business.id),
         scope.storeId
-          ? eq(purchaseInvoices.branch_id, scope.storeId)
+          ? eq(purchaseInvoices.store_id, scope.storeId)
           : undefined,
         sql`${purchaseInvoices.payment_status} in ('unpaid','partially_paid')`,
       ),

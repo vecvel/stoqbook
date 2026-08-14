@@ -19,17 +19,17 @@ export interface DefaultRole {
   slug: string;
   name: string;
   description: string;
-  isOwner?: boolean;
-  /** "*" grants everything; the Owner role uses this. */
+  isSuperAdmin?: boolean;
+  /** "*" grants everything; the Super Admin role uses this. */
   permissions: string[] | "*";
 }
 
 export const DEFAULT_ROLES: DefaultRole[] = [
   {
-    slug: "owner",
-    name: "Owner",
+    slug: "super_admin",
+    name: "Super Admin",
     description: "Full access to every module, setting and report.",
-    isOwner: true,
+    isSuperAdmin: true,
     permissions: "*",
   },
   {

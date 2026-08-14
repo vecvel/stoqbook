@@ -158,7 +158,7 @@ export async function postMovements(
 
     await tx.insert(inventoryMovements).values({
       tenant_id: ctx.businessId,
-      branch_id: movement.storeId,
+      store_id: movement.storeId,
       warehouse_id: movement.warehouseId,
       product_id: movement.productId,
       batch_id: movement.batchId ?? null,
@@ -229,7 +229,7 @@ async function lockLevel(
     .insert(inventoryLevels)
     .values({
       tenant_id: businessId,
-      branch_id: storeId,
+      store_id: storeId,
       warehouse_id: warehouseId,
       product_id: productId,
     })
@@ -446,7 +446,7 @@ export async function reserveStock(
 
   await tx.insert(stockReservations).values({
     tenant_id: ctx.businessId,
-    branch_id: input.storeId,
+    store_id: input.storeId,
     warehouse_id: input.warehouseId,
     product_id: input.productId,
     quantity: dec(input.quantity),
@@ -482,7 +482,7 @@ export async function releaseReservation(
 
   await moveBetweenStates(tx, ctx, {
     productId: reservation.product_id,
-    storeId: reservation.branch_id,
+    storeId: reservation.store_id,
     warehouseId: reservation.warehouse_id,
     quantity: String(reservation.quantity),
     from: "reserved",
@@ -517,7 +517,7 @@ export async function inventoryValue(
     .where(
       and(
         eq(inventoryLevels.tenant_id, businessId),
-        options.storeId ? eq(inventoryLevels.branch_id, options.storeId) : undefined,
+        options.storeId ? eq(inventoryLevels.store_id, options.storeId) : undefined,
       ),
     );
   return dec(row?.value ?? "0");
@@ -556,7 +556,7 @@ export async function lowStockItems(
         eq(inventoryLevels.tenant_id, businessId),
         eq(products.track_inventory, true),
         eq(products.status, "active"),
-        options.storeId ? eq(inventoryLevels.branch_id, options.storeId) : undefined,
+        options.storeId ? eq(inventoryLevels.store_id, options.storeId) : undefined,
         sql`${products.min_stock} > 0`,
         sql`${inventoryLevels.quantity_available} <= ${products.min_stock}`,
       ),

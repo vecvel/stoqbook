@@ -22,18 +22,18 @@ import { deleteRole } from "../../actions";
 export function RoleActions({
   roleId,
   roleName,
-  isOwner,
+  isSuperAdmin,
   memberCount,
 }: {
   roleId: string;
   roleName: string;
-  isOwner: boolean;
+  isSuperAdmin: boolean;
   memberCount: number;
 }) {
   const [pending, startTransition] = useTransition();
 
-  // The Owner role is structural and can never be removed.
-  if (isOwner) return null;
+  // The Super Admin role is structural and can never be removed.
+  if (isSuperAdmin) return null;
 
   if (memberCount > 0) {
     return (

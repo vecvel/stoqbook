@@ -102,7 +102,7 @@ export async function nextNumber(
 
   let seq = await findSequence(client, businessId, documentType, storeId);
 
-  // Fall back to the tenant-wide sequence when no branch-specific one exists.
+  // Fall back to the tenant-wide sequence when no store-specific one exists.
   if (!seq && storeId) {
     seq = await findSequence(client, businessId, documentType, null);
   }
@@ -114,7 +114,7 @@ export async function nextNumber(
       .insert(numberSequences)
       .values({
         tenant_id: businessId,
-        branch_id: null,
+        store_id: null,
         document_type: documentType,
         prefix: def?.defaultPrefix ?? documentType.slice(0, 3).toUpperCase(),
         include_period: def?.includePeriod ?? true,
@@ -161,8 +161,8 @@ async function findSequence(
         eq(numberSequences.tenant_id, businessId),
         eq(numberSequences.document_type, documentType),
         storeId
-          ? eq(numberSequences.branch_id, storeId)
-          : isNull(numberSequences.branch_id),
+          ? eq(numberSequences.store_id, storeId)
+          : isNull(numberSequences.store_id),
       ),
     )
     .limit(1);
@@ -188,7 +188,7 @@ export async function provisionSequences(
     .values(
       DOCUMENT_TYPES.map((d) => ({
         tenant_id: businessId,
-        branch_id: null,
+        store_id: null,
         document_type: d.type,
         prefix: d.defaultPrefix,
         include_period: d.includePeriod,

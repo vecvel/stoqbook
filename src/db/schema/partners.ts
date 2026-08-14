@@ -28,7 +28,7 @@ import {
   timestamps,
 } from "./_shared";
 import { tenants } from "./admin";
-import { branches } from "./organization";
+import { stores } from "./organization";
 import { products } from "./catalog";
 
 /* ------------------------------------------------------------------------- */
@@ -204,7 +204,7 @@ export const customerLedger = pgTable(
     customer_id: uuid("customer_id")
       .notNull()
       .references(() => customers.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
     /** Positive = debit (customer owes more), negative = credit (payment). */
@@ -383,7 +383,7 @@ export const supplierLedger = pgTable(
     supplier_id: uuid("supplier_id")
       .notNull()
       .references(() => suppliers.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id").references(() => branches.id, {
+    store_id: uuid("store_id").references(() => stores.id, {
       onDelete: "set null",
     }),
     /** Positive = payable increases, negative = payment made. */

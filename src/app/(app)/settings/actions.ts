@@ -4,7 +4,7 @@ import { and, count, eq, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   inventoryLevels,
   numberSequences,
   organizations,
@@ -197,13 +197,13 @@ export async function saveStore(
     if (!code) return failure("Store code is required.", { code: ["Required."] });
 
     const clash = await db
-      .select({ id: branches.id })
-      .from(branches)
+      .select({ id: stores.id })
+      .from(stores)
       .where(
         and(
-          eq(branches.tenant_id, ctx.business.id),
-          eq(branches.code, code),
-          id ? ne(branches.id, id) : undefined,
+          eq(stores.tenant_id, ctx.business.id),
+          eq(stores.code, code),
+          id ? ne(stores.id, id) : undefined,
         ),
       )
       .limit(1);
@@ -228,10 +228,10 @@ export async function saveStore(
 
     if (id) {
       await db
-        .update(branches)
+        .update(stores)
         .set({ ...values, updated_at: new Date(), updated_by: ctx.user.id })
         .where(
-          and(eq(branches.id, id), eq(branches.tenant_id, ctx.business.id)),
+          and(eq(stores.id, id), eq(stores.tenant_id, ctx.business.id)),
         );
     } else {
       // Plan limits are enforced before creating the store.
@@ -244,7 +244,7 @@ export async function saveStore(
         .limit(1);
       if (!organization) throw NotFoundError("Organisation not found.");
 
-      await db.insert(branches).values({
+      await db.insert(stores).values({
         tenant_id: ctx.business.id,
         organization_id: organization.id,
         ...values,
@@ -273,25 +273,19 @@ export async function deleteStore(storeId: string): Promise<ActionResult> {
 
     const [store] = await db
       .select()
-      .from(branches)
+      .from(stores)
       .where(
-        and(eq(branches.id, storeId), eq(branches.tenant_id, ctx.business.id)),
+        and(eq(stores.id, storeId), eq(stores.tenant_id, ctx.business.id)),
       )
       .limit(1);
     if (!store) throw NotFoundError("Store not found.");
 
-    if (store.is_default) {
-      throw BusinessRuleError(
-        "The default store cannot be deleted.",
-        "DEFAULT_STORE_PROTECTED",
-      );
-    }
 
     // A store holding inventory cannot be removed (06-database-architecture.md).
     const [stock] = await db
       .select({ value: count() })
       .from(inventoryLevels)
-      .where(eq(inventoryLevels.branch_id, storeId));
+      .where(eq(inventoryLevels.store_id, storeId));
     if (Number(stock?.value ?? 0) > 0) {
       throw ConflictError(
         "This store still holds stock records. Transfer the stock out first.",
@@ -301,7 +295,7 @@ export async function deleteStore(storeId: string): Promise<ActionResult> {
     const [staff] = await db
       .select({ value: count() })
       .from(users)
-      .where(and(eq(users.branch_id, storeId), isNull(users.deleted_at)));
+      .where(and(eq(users.store_id, storeId), isNull(users.deleted_at)));
     if (Number(staff?.value ?? 0) > 0) {
       throw ConflictError(
         `${staff.value} employee(s) are assigned to this store. Reassign them first.`,
@@ -309,13 +303,13 @@ export async function deleteStore(storeId: string): Promise<ActionResult> {
     }
 
     await db
-      .update(branches)
+      .update(stores)
       .set({
         deleted_at: new Date(),
         deleted_by: ctx.user.id,
         is_active: false,
       })
-      .where(eq(branches.id, storeId));
+      .where(eq(stores.id, storeId));
 
     revalidate("/settings/stores");
     return success(undefined, `${store.name} removed.`);
@@ -360,7 +354,7 @@ export async function saveWarehouse(
     const values = {
       code,
       name,
-      branch_id: uuid(form, "branch_id"),
+      store_id: uuid(form, "store_id"),
       address_line1: optionalStr(form, "address_line1"),
       city: optionalStr(form, "city"),
       valuation_method: (str(form, "valuation_method") ||
@@ -417,12 +411,6 @@ export async function deleteWarehouse(
       .limit(1);
     if (!warehouse) throw NotFoundError("Warehouse not found.");
 
-    if (warehouse.is_default) {
-      throw BusinessRuleError(
-        "The default warehouse cannot be deleted.",
-        "DEFAULT_WAREHOUSE_PROTECTED",
-      );
-    }
 
     const [stock] = await db
       .select({ value: count() })

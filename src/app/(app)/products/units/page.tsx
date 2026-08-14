@@ -56,7 +56,7 @@ export default async function UnitsPage() {
   }));
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Units of measure"
         description="Whole units cannot be sold in fractions; fractional units support quantities like 1.5 kg."

@@ -1,16 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 import { Field, FieldRow, FormError, SubmitButton } from "@/components/shared/form";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 import { setupAction, type AuthFormState } from "../actions";
 
 /**
- * First-run setup. Everything here is captured in one submission so the
- * installation is fully usable the moment it completes — a partially set up
- * business would leave POS and inventory unable to function.
+ * First-run setup step-based wizard.
  */
 export function SetupForm({
   countries,
@@ -26,13 +26,107 @@ export function SetupForm({
     {},
   );
   const errors = state.fieldErrors ?? {};
+  const [step, setStep] = useState(1);
+
+  const validateStep = (currentStep: number) => {
+    if (currentStep === 1) {
+      const businessName = document.getElementById("business_name") as HTMLInputElement;
+      if (!businessName?.value.trim()) {
+        businessName?.reportValidity();
+        return false;
+      }
+    } else if (currentStep === 2) {
+      const superAdminName = document.getElementById("super_admin_name") as HTMLInputElement;
+      const email = document.getElementById("email") as HTMLInputElement;
+      const password = document.getElementById("password") as HTMLInputElement;
+      const confirmPassword = document.getElementById("confirm_password") as HTMLInputElement;
+
+      if (!superAdminName?.value.trim()) {
+        superAdminName?.reportValidity();
+        return false;
+      }
+      if (!email?.value.trim() || !email.reportValidity()) {
+        email?.reportValidity();
+        return false;
+      }
+      if (!password?.value || password.value.length < 8) {
+        password?.setCustomValidity("Password must be at least 8 characters.");
+        password?.reportValidity();
+        return false;
+      } else {
+        password?.setCustomValidity("");
+      }
+      if (confirmPassword?.value !== password?.value) {
+        confirmPassword?.setCustomValidity("Passwords do not match.");
+        confirmPassword?.reportValidity();
+        return false;
+      } else {
+        confirmPassword?.setCustomValidity("");
+      }
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep((prev) => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setStep((prev) => Math.max(1, prev - 1));
+  };
 
   return (
     <form action={action} className="flex flex-col gap-6">
       <FormError message={state.error} />
 
-      <section className="flex flex-col gap-4">
-        <h2 className="section-title">1 · Your business</h2>
+      {/* Step Indicator Progress Bar */}
+      <div className="flex items-center justify-between border-b border-border pb-5 mb-2 select-none">
+        {[
+          { num: 1, label: "Business" },
+          { num: 2, label: "Super Admin" },
+        ].map((s, idx) => (
+          <div key={s.num} className="flex flex-1 items-center last:flex-initial">
+            <div className="flex items-center gap-2">
+              <span
+                className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-300 ${
+                  step === s.num
+                    ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20 scale-110"
+                    : step > s.num
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s.num}
+              </span>
+              <span
+                className={`text-xs font-semibold ${
+                  step === s.num
+                    ? "text-foreground font-bold"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+            {idx < 1 && (
+              <div
+                className={`mx-4 h-0.5 flex-1 transition-all duration-500 ${
+                  step > s.num ? "bg-accent" : "bg-border"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* STEP 1: BUSINESS */}
+      <div className={step === 1 ? "flex flex-col gap-4" : "hidden"}>
+        <div className="mb-2">
+          <h2 className="text-base font-bold text-foreground">Your business details</h2>
+          <p className="text-xs text-muted-foreground">Specify your store name, currency, and country configuration.</p>
+        </div>
 
         <Field
           label="Business name"
@@ -44,34 +138,20 @@ export function SetupForm({
           <Input
             id="business_name"
             name="business_name"
-            placeholder="FreshMart Supermarket"
-            required
-            autoFocus
+            placeholder="My Business"
+            required={step === 1}
+            autoFocus={step === 1}
           />
         </Field>
 
-        <FieldRow>
-          <Field
-            label="First store"
-            htmlFor="store_name"
-            hint="More stores can be added later."
-          >
-            <Input
-              id="store_name"
-              name="store_name"
-              placeholder="Main Store"
-              defaultValue="Main Store"
-            />
-          </Field>
-          <Field label="Phone" htmlFor="phone">
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="+91 98200 11223"
-            />
-          </Field>
-        </FieldRow>
+        <Field label="Phone" htmlFor="phone">
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="+91 98200 11223"
+          />
+        </Field>
 
         <FieldRow cols={3}>
           <Field label="Country" htmlFor="country">
@@ -121,27 +201,30 @@ export function SetupForm({
             </select>
           </Field>
         </FieldRow>
-      </section>
+      </div>
 
-      <section className="flex flex-col gap-4 border-t border-border pt-5">
-        <h2 className="section-title">2 · Owner account</h2>
-        <p className="-mt-2 text-xs text-muted-foreground">
-          The owner holds every permission and cannot be locked out. Additional
-          users are created later from Employees.
-        </p>
+      {/* STEP 2: SUPER ADMIN */}
+      <div className={step === 2 ? "flex flex-col gap-4" : "hidden"}>
+        <div className="mb-2">
+          <h2 className="text-base font-bold text-foreground">Super Admin account</h2>
+          <p className="text-xs text-muted-foreground">
+            The super admin holds every permission and cannot be locked out.
+          </p>
+        </div>
 
         <FieldRow>
           <Field
             label="Your name"
-            htmlFor="owner_name"
-            error={errors.owner_name}
+            htmlFor="super_admin_name"
+            error={errors.super_admin_name}
+            hint="Enter your name."
             required
           >
             <Input
-              id="owner_name"
-              name="owner_name"
-              placeholder="Asha Menon"
-              required
+              id="super_admin_name"
+              name="super_admin_name"
+              placeholder="Stoqer"
+              required={step === 2}
             />
           </Field>
           <Field label="Email address" htmlFor="email" error={errors.email} required>
@@ -151,7 +234,7 @@ export function SetupForm({
               type="email"
               autoComplete="email"
               placeholder="you@business.com"
-              required
+              required={step === 2}
             />
           </Field>
         </FieldRow>
@@ -169,7 +252,7 @@ export function SetupForm({
               name="password"
               type="password"
               autoComplete="new-password"
-              required
+              required={step === 2}
             />
           </Field>
           <Field
@@ -183,36 +266,44 @@ export function SetupForm({
               name="confirm_password"
               type="password"
               autoComplete="new-password"
-              required
+              required={step === 2}
             />
           </Field>
         </FieldRow>
-      </section>
+      </div>
 
-      <section className="flex flex-col gap-4 border-t border-border pt-5">
-        <h2 className="section-title">3 · Licence</h2>
-
-        <Field
-          label="Licence key"
-          htmlFor="license_key"
-          hint="Optional. A lifetime licence is activated either way; the key is recorded for your records."
-        >
-          <Input
-            id="license_key"
-            name="license_key"
-            placeholder="STQB-XXXX-XXXX-XXXX"
-            className="font-mono"
-          />
-        </Field>
-      </section>
-
-      <SubmitButton className="w-full" pendingLabel="Setting up…">
-        Complete setup
-      </SubmitButton>
+      {/* Step Buttons */}
+      <div className="flex gap-3 mt-4">
+        {step > 1 && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="w-1/3 gap-1"
+          >
+            <ChevronLeft className="size-4" />
+            Back
+          </Button>
+        )}
+        {step < 2 ? (
+          <Button
+            type="button"
+            onClick={handleNext}
+            className="flex-1 gap-1"
+          >
+            Continue
+            <ChevronRight className="size-4" />
+          </Button>
+        ) : (
+          <SubmitButton className="flex-1" pendingLabel="Setting up…">
+            Complete setup
+          </SubmitButton>
+        )}
+      </div>
 
       <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-        Setup provisions your store, warehouse, the standard role set, default
-        tax groups and document numbering so you can start trading immediately.
+        Setup provisions your business, the standard role set, default tax groups
+        and document numbering. Add your stores from Settings once you&apos;re in.
         This runs once.
       </p>
     </form>

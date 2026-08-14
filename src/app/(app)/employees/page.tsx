@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   departments,
   designations,
   roles,
@@ -81,7 +81,7 @@ export default async function EmployeesPage({
     filters.push(sql`${users.status} <> 'archived'`);
   }
   if (query.filters.store) {
-    filters.push(eq(users.branch_id, query.filters.store));
+    filters.push(eq(users.store_id, query.filters.store));
   }
   if (query.filters.department) {
     filters.push(eq(users.department_id, query.filters.department));
@@ -106,7 +106,7 @@ export default async function EmployeesPage({
         employmentType: users.employment_type,
         joiningDate: users.joining_date,
         lastLoginAt: users.last_login_at,
-        storeName: branches.name,
+        storeName: stores.name,
         departmentName: departments.name,
         designationName: designations.name,
         roleNames: sql<string>`(${db
@@ -118,7 +118,7 @@ export default async function EmployeesPage({
           .where(eq(userRoles.user_id, users.id))})`,
       })
       .from(users)
-      .leftJoin(branches, eq(branches.id, users.branch_id))
+      .leftJoin(stores, eq(stores.id, users.store_id))
       .leftJoin(departments, eq(departments.id, users.department_id))
       .leftJoin(designations, eq(designations.id, users.designation_id))
       .where(where)

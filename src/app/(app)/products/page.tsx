@@ -378,7 +378,7 @@ export default async function ProductsPage({
   );
 }
 
-/** Stock figures are shown for the active branch's default warehouse. */
+/** Stock figures are shown for the active store's default warehouse. */
 async function defaultWarehouseId(
   businessId: string,
   storeId: string | undefined,
@@ -391,10 +391,10 @@ async function defaultWarehouseId(
       and(
         eq(warehouses.tenant_id, businessId),
         eq(warehouses.is_active, true),
-        storeId ? eq(warehouses.branch_id, storeId) : undefined,
+        storeId ? eq(warehouses.store_id, storeId) : undefined,
       ),
     )
-    .orderBy(desc(warehouses.is_default))
+    .orderBy(asc(warehouses.sort_order))
     .limit(1);
   return row?.id ?? null;
 }

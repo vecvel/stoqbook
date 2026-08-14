@@ -25,7 +25,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { StatGrid, StatTile } from "@/components/shared/stat-tile";
 import { db } from "@/db";
-import { branches, expenseCategories, expenses, users } from "@/db/schema";
+import { stores, expenseCategories, expenses, users } from "@/db/schema";
 import { parseListQuery } from "@/lib/api/query";
 import { hasPermission, seesAllStores } from "@/lib/authz/context";
 import { requirePermission } from "@/lib/authz/guard";
@@ -64,7 +64,7 @@ export default async function ExpensesPage({
   const filters = [eq(expenses.tenant_id, ctx.business.id)];
 
   if (!seesAllStores(ctx) && ctx.activeStore) {
-    filters.push(eq(expenses.branch_id, ctx.activeStore.id));
+    filters.push(eq(expenses.store_id, ctx.activeStore.id));
   }
   if (query.search) {
     const term = `%${query.search}%`;
@@ -104,7 +104,7 @@ export default async function ExpensesPage({
         note: expenses.note,
         categoryId: expenses.category_id,
         categoryName: expenseCategories.name,
-        storeName: branches.name,
+        storeName: stores.name,
         createdById: expenses.created_by,
         createdByName: users.full_name,
         approvalStatus: expenses.approval_status,
@@ -112,7 +112,7 @@ export default async function ExpensesPage({
       })
       .from(expenses)
       .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.category_id))
-      .innerJoin(branches, eq(branches.id, expenses.branch_id))
+      .innerJoin(stores, eq(stores.id, expenses.store_id))
       .leftJoin(users, eq(users.id, expenses.created_by))
       .where(where)
       .orderBy(desc(expenses.expense_date))

@@ -72,7 +72,7 @@ export async function openSession(
       .insert(posSessions)
       .values({
         tenant_id: ctx.business.id,
-        branch_id: ctx.activeStore.id,
+        store_id: ctx.activeStore.id,
         warehouse_id: warehouseId,
         cashier_id: ctx.user.id,
         session_number: sessionNumber,

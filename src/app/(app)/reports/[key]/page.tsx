@@ -121,7 +121,7 @@ export default async function ReportRunnerPage({
     {
       from: query.from as string,
       to: query.to as string,
-      branch: storeId,
+      store: storeId,
       warehouse: warehouseId,
       category: categoryId,
       format: "csv",

@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   goodsReceipts,
   purchaseOrders,
   suppliers,
@@ -58,13 +58,13 @@ export default async function GoodsReceiptsPage({
         orderNumber: purchaseOrders.order_number,
         supplierName: suppliers.company_name,
         warehouseName: warehouses.name,
-        storeName: branches.name,
+        storeName: stores.name,
         receivedByName: users.full_name,
       })
       .from(goodsReceipts)
       .innerJoin(suppliers, eq(suppliers.id, goodsReceipts.supplier_id))
       .innerJoin(warehouses, eq(warehouses.id, goodsReceipts.warehouse_id))
-      .innerJoin(branches, eq(branches.id, goodsReceipts.branch_id))
+      .innerJoin(stores, eq(stores.id, goodsReceipts.store_id))
       .leftJoin(purchaseOrders, eq(purchaseOrders.id, goodsReceipts.order_id))
       .leftJoin(users, eq(users.id, goodsReceipts.received_by))
       .where(where)

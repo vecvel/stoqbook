@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ChevronLeft, LogOut, Menu, Search, Store, User } from "lucide-react";
+import { ChevronLeft, LogOut, Menu, Search, Settings, Store, User } from "lucide-react";
 
 import { SidebarNav, type NavNodeView } from "@/components/layout/sidebar-nav";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export interface ShellStore {
 }
 
 export interface ShellUser {
+  id: string;
   name: string;
   email: string;
   roleLabel: string;
@@ -91,7 +93,7 @@ export function AppShell({
           type="button"
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-2.5 top-[52px] z-20 flex size-5 items-center justify-center rounded-full border border-shell-border bg-shell text-shell-foreground transition-colors hover:bg-shell-foreground/15"
+          className="absolute -right-2.5 top-13 z-20 flex size-5 items-center justify-center rounded-full border border-shell-border bg-shell text-shell-foreground transition-colors hover:bg-shell-foreground/15"
         >
           <ChevronLeft
             className={cn("size-3 transition-transform", collapsed && "rotate-180")}
@@ -101,7 +103,7 @@ export function AppShell({
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-[248px] border-r-0 p-0">
+        <SheetContent side="left" className="w-62 border-r-0 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <Rail
             businessName={businessName}
@@ -145,14 +147,18 @@ function Rail({
     <aside
       className={cn(
         "flex h-full shrink-0 flex-col border-r border-shell-border bg-shell text-shell-foreground transition-[width] duration-200",
-        collapsed ? "w-[60px]" : "w-[248px]",
+        collapsed ? "w-15" : "w-62",
       )}
     >
       {/* Brand */}
       <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-shell-border px-3">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-xs bg-parchment font-bold text-bark">
-          S
-        </div>
+        <Image
+          src="/images/logo-icon.png"
+          alt="StoqBook Logo"
+          width={32}
+          height={32}
+          className="rounded-xs object-contain"
+        />
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold leading-tight">
@@ -250,7 +256,7 @@ function Header({
           <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
         </svg>
         {unreadCount > 0 ? (
-          <span className="absolute right-0.5 top-0.5 flex min-w-[15px] items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold leading-[15px] text-accent-foreground">
+          <span className="absolute right-0.5 top-0.5 flex min-w-3.75 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold leading-3.75 text-accent-foreground">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
@@ -289,7 +295,7 @@ function StoreSwitcher({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Store className="size-3.5" />
-          <span className="max-w-[140px] truncate">
+          <span className="max-w-35 truncate">
             {active?.name ?? "Select store"}
           </span>
         </Button>
@@ -331,10 +337,10 @@ function UserMenu({ user }: { user: ShellUser }) {
             {initials(user.name)}
           </span>
           <span className="hidden text-left leading-tight lg:block">
-            <span className="block max-w-[140px] truncate text-xs font-medium">
+            <span className="block max-w-35 truncate text-xs font-medium">
               {user.name}
             </span>
-            <span className="block max-w-[140px] truncate text-[10px] text-muted-foreground">
+            <span className="block max-w-35 truncate text-[10px] text-muted-foreground">
               {user.roleLabel}
             </span>
           </span>
@@ -349,8 +355,14 @@ function UserMenu({ user }: { user: ShellUser }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings/preferences" className="gap-2">
+          <Link href={`/employees/${user.id}`} className="gap-2">
             <User className="size-3.5" />
+            My profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings/preferences" className="gap-2">
+            <Settings className="size-3.5" />
             My preferences
           </Link>
         </DropdownMenuItem>

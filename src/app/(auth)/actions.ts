@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { loginHistory, roles, tenants, userRoles, users } from "@/db/schema";
@@ -90,11 +90,11 @@ export async function loginAction(
   }
 
   /* Business status is checked after authentication so the message is specific.
-     The Owner is still let through on a suspended business, because the admin
+     The Super Admin is still let through on a suspended business, because the admin
      panel is where suspension gets lifted. */
-  const isOwnerLogin = await ownsBusiness(user.id);
+  const isSuperAdminLogin = await isSuperAdminUser(user.id);
 
-  if (business.status === "suspended" && !isOwnerLogin) {
+  if (business.status === "suspended" && !isSuperAdminLogin) {
     await recordLogin(email, "business_suspended", meta, business.id, user.id);
     return {
       error:
@@ -102,7 +102,7 @@ export async function loginAction(
         "This business is suspended. Contact your administrator to restore access.",
     };
   }
-  if (business.status === "archived" && !isOwnerLogin) {
+  if (business.status === "archived" && !isSuperAdminLogin) {
     await recordLogin(email, "business_archived", meta, business.id, user.id);
     return { error: "This business is archived and is no longer trading." };
   }
@@ -127,7 +127,7 @@ export async function loginAction(
   await createSession({
     businessId: business.id,
     userId: user.id,
-    activeStoreId: user.branch_id,
+    activeStoreId: user.store_id,
     ipAddress: meta.ip,
     userAgent: meta.userAgent,
     ttlMinutes: timeoutMinutes,
@@ -147,13 +147,18 @@ export async function loginAction(
   redirect(business.status === "active" ? "/dashboard" : "/admin");
 }
 
-/** True when the user holds the Owner role. */
-async function ownsBusiness(userId: string): Promise<boolean> {
+/** True when the user holds the Super Admin role. */
+async function isSuperAdminUser(userId: string): Promise<boolean> {
   const [row] = await db
     .select({ id: roles.id })
     .from(userRoles)
     .innerJoin(roles, eq(roles.id, userRoles.role_id))
-    .where(and(eq(userRoles.user_id, userId), eq(roles.is_owner, true)))
+    .where(
+      and(
+        eq(userRoles.user_id, userId),
+        sql`(${roles.is_super_admin} = true OR ${roles.slug} = 'super_admin')`,
+      ),
+    )
     .limit(1);
   return Boolean(row);
 }
@@ -225,21 +230,19 @@ export async function setupAction(
   }
 
   const businessName = String(formData.get("business_name") ?? "").trim();
-  const storeName = String(formData.get("store_name") ?? "").trim();
-  const ownerName = String(formData.get("owner_name") ?? "").trim();
+  const superAdminName = String(formData.get("super_admin_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const phone = String(formData.get("phone") ?? "").trim();
   const country = String(formData.get("country") ?? "").trim();
   const currency = String(formData.get("currency") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "").trim();
-  const licenseKey = String(formData.get("license_key") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm_password") ?? "");
 
   const fieldErrors: Record<string, string[]> = {};
 
   if (!businessName) fieldErrors.business_name = ["Business name is required."];
-  if (!ownerName) fieldErrors.owner_name = ["Your name is required."];
+  if (!superAdminName) fieldErrors.super_admin_name = ["Your name is required."];
   if (!email.includes("@")) fieldErrors.email = ["Enter a valid email address."];
 
   const passwordProblems = validatePassword(password, { minLength: 8 });
@@ -255,25 +258,20 @@ export async function setupAction(
   try {
     const result = await setupBusiness({
       businessName,
-      storeName: storeName || undefined,
-      ownerName,
-      ownerEmail: email,
-      ownerPassword: password,
+      superAdminName,
+      superAdminEmail: email,
+      superAdminPassword: password,
       contactPhone: phone || undefined,
       country: country || undefined,
       currency: currency || undefined,
       timezone: timezone || undefined,
-      licenseKey: licenseKey || undefined,
-      // A perpetual licence is the default for a per-installation sale.
-      planSlug: "lifetime",
-      billingMode: "lifetime",
     });
 
     const meta = await requestMeta();
     await createSession({
       businessId: result.businessId,
-      userId: result.ownerUserId,
-      activeStoreId: result.storeId,
+      userId: result.superAdminUserId,
+      activeStoreId: result.storeId ?? null,
       ipAddress: meta.ip,
       userAgent: meta.userAgent,
     });
@@ -296,17 +294,23 @@ export async function logoutAction(): Promise<void> {
 
 /** Used by the seeded-demo shortcut on the sign-in screen. */
 export async function demoLoginAction(role: string): Promise<void> {
+  const superAdminEmail =
+    process.env.SEED_SUPER_ADMIN_EMAIL ??
+    process.env.SEED_OWNER_EMAIL ??
+    "superadmin@mybusiness.test";
+
   const emails: Record<string, string> = {
-    owner: "owner@freshmart.test",
-    manager: "manager@freshmart.test",
-    cashier: "cashier@freshmart.test",
-    inventory: "stock@freshmart.test",
-    accountant: "accounts@freshmart.test",
+    super_admin: superAdminEmail,
+    superadmin: superAdminEmail,
+    manager: "manager@mybusiness.test",
+    cashier: "cashier@mybusiness.test",
+    inventory: "stock@mybusiness.test",
+    accountant: "accounts@mybusiness.test",
   };
 
   const form = new FormData();
-  form.set("email", emails[role] ?? emails.owner);
-  form.set("password", process.env.SEED_OWNER_PASSWORD ?? "Stoqbook@123");
+  form.set("email", emails[role] ?? superAdminEmail);
+  form.set("password", process.env.SEED_SUPER_ADMIN_PASSWORD ?? process.env.SEED_OWNER_PASSWORD ?? "Stoqbook@123");
   await loginAction({}, form);
 }
 

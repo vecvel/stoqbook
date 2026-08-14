@@ -80,7 +80,7 @@ export default async function TaxGroupsPage() {
   }));
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Tax groups"
         description="Each product belongs to one tax group. Tax is calculated at billing time from these rates."

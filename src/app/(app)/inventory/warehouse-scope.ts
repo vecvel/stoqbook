@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { warehouses } from "@/db/schema";
@@ -11,7 +11,7 @@ export interface WarehouseOption {
   name: string;
   code: string;
   storeId: string | null;
-  isDefault: boolean;
+  sortOrder: number;
 }
 
 /**
@@ -30,8 +30,8 @@ export async function scopedWarehouses(
       id: warehouses.id,
       name: warehouses.name,
       code: warehouses.code,
-      storeId: warehouses.branch_id,
-      isDefault: warehouses.is_default,
+      storeId: warehouses.store_id,
+      sortOrder: warehouses.sort_order,
     })
     .from(warehouses)
     .where(
@@ -41,15 +41,15 @@ export async function scopedWarehouses(
         isNull(warehouses.deleted_at),
       ),
     )
-    .orderBy(desc(warehouses.is_default), asc(warehouses.name));
+    .orderBy(asc(warehouses.sort_order), asc(warehouses.name));
 
-  // A warehouse with no branch is tenant-wide and always visible.
+  // A warehouse with no store is tenant-wide and always visible.
   const visible = rows.filter(
     (w) => !w.storeId || storeIds.has(w.storeId),
   );
 
   if (!ctx.entitlements.features.has("inventory.multi_warehouse")) {
-    const primary = visible.find((w) => w.isDefault) ?? visible[0];
+    const primary = visible[0];
     return primary ? [primary] : [];
   }
 
@@ -65,5 +65,5 @@ export function resolveWarehouse(
     const match = options.find((w) => w.id === requested);
     if (match) return match;
   }
-  return options.find((w) => w.isDefault) ?? options[0] ?? null;
+  return options[0] ?? null;
 }

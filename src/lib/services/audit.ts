@@ -46,7 +46,7 @@ export async function auditEvent(
   const meta = await requestMeta();
   await client.insert(auditLogs).values({
     tenant_id: ctx.business.id,
-    branch_id: input.storeId ?? ctx.activeStore?.id ?? null,
+    store_id: input.storeId ?? ctx.activeStore?.id ?? null,
     actor_id: ctx.user.id,
     actor_name: ctx.user.full_name,
     actor_type: "user",

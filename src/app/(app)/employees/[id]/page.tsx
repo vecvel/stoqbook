@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/db";
 import {
   auditLogs,
-  branches,
+  stores,
   departments,
   designations,
   roles,
@@ -56,12 +56,12 @@ export default async function EmployeeDetailPage({
   const [row] = await db
     .select({
       user: users,
-      storeName: branches.name,
+      storeName: stores.name,
       departmentName: departments.name,
       designationName: designations.name,
     })
     .from(users)
-    .leftJoin(branches, eq(branches.id, users.branch_id))
+    .leftJoin(stores, eq(stores.id, users.store_id))
     .leftJoin(departments, eq(departments.id, users.department_id))
     .leftJoin(designations, eq(designations.id, users.designation_id))
     .where(and(eq(users.id, id), eq(users.tenant_id, ctx.business.id)))
@@ -81,7 +81,7 @@ export default async function EmployeeDetailPage({
           id: roles.id,
           name: roles.name,
           description: roles.description,
-          isOwner: roles.is_owner,
+          isOwner: roles.is_super_admin,
         })
         .from(userRoles)
         .innerJoin(roles, eq(roles.id, userRoles.role_id))
@@ -226,13 +226,13 @@ export default async function EmployeeDetailPage({
                 employmentType: user.employment_type,
                 departmentId: user.department_id ?? "",
                 designationId: user.designation_id ?? "",
-                storeId: user.branch_id ?? "",
+                storeId: user.store_id ?? "",
                 loginEnabled: user.login_enabled,
                 status: user.status,
                 roleIds: assignedRoles.map((r) => r.id),
               }}
               roles={options.roles}
-              branches={options.branches}
+              stores={options.stores}
               departments={options.departments}
               designations={options.designations}
               passwordMinLength={readNumber(

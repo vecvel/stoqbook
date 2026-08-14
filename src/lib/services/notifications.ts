@@ -147,7 +147,7 @@ export async function emit(
       return {
         tenant_id: input.businessId,
         user_id: userId,
-        branch_id: input.storeId ?? null,
+        store_id: input.storeId ?? null,
         event: input.event,
         module_slug: input.moduleSlug ?? null,
         channel,
@@ -331,7 +331,7 @@ async function resolveRecipients(
       .where(
         and(
           eq(roles.tenant_id, input.businessId),
-          sql`(${roles.is_owner} = true OR ${rolePermissions.permission_key} = ${input.fallbackPermission})`,
+          sql`(${roles.is_super_admin} = true OR ${rolePermissions.permission_key} = ${input.fallbackPermission})`,
         ),
       );
     rows.forEach((r) => ids.add(r.user_id));

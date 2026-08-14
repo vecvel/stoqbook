@@ -28,7 +28,7 @@ import {
   timestamps,
 } from "./_shared";
 import { tenants } from "./admin";
-import { branches, users, warehouses } from "./organization";
+import { stores, users, warehouses } from "./organization";
 import { products, taxGroups } from "./catalog";
 import { suppliers } from "./partners";
 import { inventoryBatches } from "./inventory";
@@ -44,9 +44,9 @@ export const purchaseRequisitions = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
 
     requisition_number: text("requisition_number").notNull(),
     /** draft | pending | approved | rejected | converted | cancelled */
@@ -102,9 +102,9 @@ export const purchaseOrders = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     /** Where received goods will land. */
     warehouse_id: uuid("warehouse_id")
       .notNull()
@@ -217,9 +217,9 @@ export const goodsReceipts = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -300,9 +300,9 @@ export const purchaseInvoices = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     supplier_id: uuid("supplier_id")
       .notNull()
       .references(() => suppliers.id, { onDelete: "restrict" }),
@@ -358,9 +358,9 @@ export const supplierPayments = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     supplier_id: uuid("supplier_id")
       .notNull()
       .references(() => suppliers.id, { onDelete: "restrict" }),
@@ -399,9 +399,9 @@ export const purchaseReturns = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     warehouse_id: uuid("warehouse_id")
       .notNull()
       .references(() => warehouses.id, { onDelete: "restrict" }),
@@ -494,9 +494,9 @@ export const expenses = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
-    branch_id: uuid("branch_id")
+    store_id: uuid("store_id")
       .notNull()
-      .references(() => branches.id, { onDelete: "restrict" }),
+      .references(() => stores.id, { onDelete: "restrict" }),
     category_id: uuid("category_id").references(() => expenseCategories.id, {
       onDelete: "set null",
     }),

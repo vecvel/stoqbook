@@ -47,7 +47,7 @@ export default async function LicensePage() {
     (licence?.billing_cycle !== undefined && licence.billing_cycle !== "none");
 
   return (
-    <div className="page max-w-5xl">
+    <div className="page">
       <PageHeader
         title="Licence"
         description="What this business is entitled to use, and how much of it you are using."

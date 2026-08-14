@@ -28,7 +28,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { branches, salesInvoices, users } from "@/db/schema";
+import { stores, salesInvoices, users } from "@/db/schema";
 import { parseListQuery } from "@/lib/api/query";
 import { hasPermission, seesAllStores } from "@/lib/authz/context";
 import { requirePermission } from "@/lib/authz/guard";
@@ -53,14 +53,14 @@ export default async function SalesPage({
   const currency = ctx.business.currency;
   const canViewProfit = hasPermission(ctx, "reports.financial");
 
-  /* Branch scope: users without cross-branch access see only their branch. */
+  /* Store scope: users without cross-store access see only their store. */
   const storeIds = ctx.stores.map((b) => b.id);
   const filters = [eq(salesInvoices.tenant_id, ctx.business.id)];
 
   if (!seesAllStores(ctx) && ctx.activeStore) {
-    filters.push(eq(salesInvoices.branch_id, ctx.activeStore.id));
+    filters.push(eq(salesInvoices.store_id, ctx.activeStore.id));
   } else if (storeIds.length > 0) {
-    filters.push(or(...storeIds.map((id) => eq(salesInvoices.branch_id, id)))!);
+    filters.push(or(...storeIds.map((id) => eq(salesInvoices.store_id, id)))!);
   }
 
   if (query.search) {
@@ -123,11 +123,11 @@ export default async function SalesPage({
         balanceAmount: salesInvoices.balance_amount,
         grossProfit: salesInvoices.gross_profit,
         paymentStatus: salesInvoices.payment_status,
-        storeName: branches.name,
+        storeName: stores.name,
         cashierName: users.full_name,
       })
       .from(salesInvoices)
-      .innerJoin(branches, eq(branches.id, salesInvoices.branch_id))
+      .innerJoin(stores, eq(stores.id, salesInvoices.store_id))
       .leftJoin(users, eq(users.id, salesInvoices.cashier_id))
       .where(where)
       .orderBy(desc(salesInvoices.invoice_date))

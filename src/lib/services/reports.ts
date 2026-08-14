@@ -157,7 +157,7 @@ const salesRegister: Runner = async (ctx, filters) => {
 
   const where = and(
     eq(salesInvoices.tenant_id, ctx.business.id),
-    storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+    storeId ? eq(salesInvoices.store_id, storeId) : undefined,
     gte(salesInvoices.invoice_date, from),
     lte(salesInvoices.invoice_date, to),
   );
@@ -298,7 +298,7 @@ const dailySales: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesInvoices.tenant_id, ctx.business.id),
-        storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+        storeId ? eq(salesInvoices.store_id, storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         lte(salesInvoices.invoice_date, to),
         sql`${salesInvoices.status} <> 'cancelled'`,
@@ -371,7 +371,7 @@ const productSales: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesInvoices.tenant_id, ctx.business.id),
-        storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+        storeId ? eq(salesInvoices.store_id, storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         lte(salesInvoices.invoice_date, to),
         sql`${salesInvoices.status} <> 'cancelled'`,
@@ -448,7 +448,7 @@ const salesByEmployee: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesInvoices.tenant_id, ctx.business.id),
-        storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+        storeId ? eq(salesInvoices.store_id, storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         lte(salesInvoices.invoice_date, to),
         sql`${salesInvoices.status} <> 'cancelled'`,
@@ -506,7 +506,7 @@ const paymentReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salePayments.tenant_id, ctx.business.id),
-        storeId ? eq(salePayments.branch_id, storeId) : undefined,
+        storeId ? eq(salePayments.store_id, storeId) : undefined,
         gte(salePayments.paid_at, from),
         lte(salePayments.paid_at, to),
       ),
@@ -569,7 +569,7 @@ const refundReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesReturns.tenant_id, ctx.business.id),
-        storeId ? eq(salesReturns.branch_id, storeId) : undefined,
+        storeId ? eq(salesReturns.store_id, storeId) : undefined,
         gte(salesReturns.return_date, from),
         lte(salesReturns.return_date, to),
       ),
@@ -628,7 +628,7 @@ const profitReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesInvoices.tenant_id, ctx.business.id),
-        storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+        storeId ? eq(salesInvoices.store_id, storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         lte(salesInvoices.invoice_date, to),
         sql`${salesInvoices.status} <> 'cancelled'`,
@@ -646,7 +646,7 @@ const profitReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(expenses.tenant_id, ctx.business.id),
-        storeId ? eq(expenses.branch_id, storeId) : undefined,
+        storeId ? eq(expenses.store_id, storeId) : undefined,
         gte(expenses.expense_date, from),
         lte(expenses.expense_date, to),
       ),
@@ -713,7 +713,7 @@ const taxReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(salesInvoices.tenant_id, ctx.business.id),
-        storeId ? eq(salesInvoices.branch_id, storeId) : undefined,
+        storeId ? eq(salesInvoices.store_id, storeId) : undefined,
         gte(salesInvoices.invoice_date, from),
         lte(salesInvoices.invoice_date, to),
         sql`${salesInvoices.status} <> 'cancelled'`,
@@ -766,7 +766,7 @@ const expenseSummary: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(expenses.tenant_id, ctx.business.id),
-        storeId ? eq(expenses.branch_id, storeId) : undefined,
+        storeId ? eq(expenses.store_id, storeId) : undefined,
         gte(expenses.expense_date, from),
         lte(expenses.expense_date, to),
       ),
@@ -827,7 +827,7 @@ const posSessionsReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(posSessions.tenant_id, ctx.business.id),
-        storeId ? eq(posSessions.branch_id, storeId) : undefined,
+        storeId ? eq(posSessions.store_id, storeId) : undefined,
         gte(posSessions.opened_at, from),
         lte(posSessions.opened_at, to),
       ),
@@ -902,7 +902,7 @@ const stockSummary: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(inventoryLevels.tenant_id, ctx.business.id),
-        storeId ? eq(inventoryLevels.branch_id, storeId) : undefined,
+        storeId ? eq(inventoryLevels.store_id, storeId) : undefined,
         filters.warehouseId
           ? eq(inventoryLevels.warehouse_id, filters.warehouseId)
           : undefined,
@@ -971,7 +971,7 @@ const inventoryValuation: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(inventoryLevels.tenant_id, ctx.business.id),
-        storeId ? eq(inventoryLevels.branch_id, storeId) : undefined,
+        storeId ? eq(inventoryLevels.store_id, storeId) : undefined,
         filters.warehouseId
           ? eq(inventoryLevels.warehouse_id, filters.warehouseId)
           : undefined,
@@ -1036,7 +1036,7 @@ const lowStockReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(inventoryLevels.tenant_id, ctx.business.id),
-        storeId ? eq(inventoryLevels.branch_id, storeId) : undefined,
+        storeId ? eq(inventoryLevels.store_id, storeId) : undefined,
         filters.warehouseId
           ? eq(inventoryLevels.warehouse_id, filters.warehouseId)
           : undefined,
@@ -1121,7 +1121,7 @@ const stockLedgerReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(inventoryMovements.tenant_id, ctx.business.id),
-        storeId ? eq(inventoryMovements.branch_id, storeId) : undefined,
+        storeId ? eq(inventoryMovements.store_id, storeId) : undefined,
         filters.warehouseId
           ? eq(inventoryMovements.warehouse_id, filters.warehouseId)
           : undefined,
@@ -1189,7 +1189,7 @@ const adjustmentReport: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(stockAdjustments.tenant_id, ctx.business.id),
-        storeId ? eq(stockAdjustments.branch_id, storeId) : undefined,
+        storeId ? eq(stockAdjustments.store_id, storeId) : undefined,
         gte(stockAdjustments.created_at, from),
         lte(stockAdjustments.created_at, to),
       ),
@@ -1408,7 +1408,7 @@ const purchaseRegister: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(purchaseOrders.tenant_id, ctx.business.id),
-        storeId ? eq(purchaseOrders.branch_id, storeId) : undefined,
+        storeId ? eq(purchaseOrders.store_id, storeId) : undefined,
         gte(purchaseOrders.order_date, from),
         lte(purchaseOrders.order_date, to),
       ),
@@ -1473,7 +1473,7 @@ const purchaseBySupplier: Runner = async (ctx, filters) => {
     .where(
       and(
         eq(purchaseOrders.tenant_id, ctx.business.id),
-        storeId ? eq(purchaseOrders.branch_id, storeId) : undefined,
+        storeId ? eq(purchaseOrders.store_id, storeId) : undefined,
         gte(purchaseOrders.order_date, from),
         lte(purchaseOrders.order_date, to),
         sql`${purchaseOrders.status} <> 'cancelled'`,
@@ -1841,7 +1841,7 @@ const supplierPerformance: Runner = supplierDirectory;
 /* ========================================================================== */
 
 const employeeDirectory: Runner = async (ctx) => {
-  const { departments, designations, branches } = await import("@/db/schema");
+  const { departments, designations, stores } = await import("@/db/schema");
 
   const rows = await db
     .select({
@@ -1850,7 +1850,7 @@ const employeeDirectory: Runner = async (ctx) => {
       code: users.employee_code,
       email: users.email,
       phone: users.phone,
-      branch: branches.name,
+      store: stores.name,
       department: departments.name,
       designation: designations.name,
       employment_type: users.employment_type,
@@ -1859,7 +1859,7 @@ const employeeDirectory: Runner = async (ctx) => {
       status: users.status,
     })
     .from(users)
-    .leftJoin(branches, eq(branches.id, users.branch_id))
+    .leftJoin(stores, eq(stores.id, users.store_id))
     .leftJoin(departments, eq(departments.id, users.department_id))
     .leftJoin(designations, eq(designations.id, users.designation_id))
     .where(and(eq(users.tenant_id, ctx.business.id), isNull(users.deleted_at)))
@@ -2006,7 +2006,7 @@ const cashierPerformance: Runner = salesByEmployee;
  */
 const auditTrail: Runner = async (ctx, filters) => {
   const { from, to } = resolveWindow(ctx, filters);
-  const { auditLogs, branches } = await import("@/db/schema");
+  const { auditLogs, stores } = await import("@/db/schema");
 
   const rows = await db
     .select({
@@ -2016,12 +2016,12 @@ const auditTrail: Runner = async (ctx, filters) => {
       event: auditLogs.event,
       module: auditLogs.module_slug,
       entity: auditLogs.entity_type,
-      store: branches.name,
+      store: stores.name,
       summary: auditLogs.summary,
       ip: auditLogs.ip_address,
     })
     .from(auditLogs)
-    .leftJoin(branches, eq(branches.id, auditLogs.branch_id))
+    .leftJoin(stores, eq(stores.id, auditLogs.store_id))
     .where(
       and(
         eq(auditLogs.tenant_id, ctx.business.id),

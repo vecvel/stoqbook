@@ -27,7 +27,7 @@ export default async function PreferencesPage() {
   );
 
   return (
-    <div className="page max-w-4xl">
+    <div className="page">
       <PageHeader
         title="Preferences"
         description="Operational defaults contributed by each enabled module."

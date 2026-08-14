@@ -23,7 +23,7 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/db";
-import { auditLogs, branches } from "@/db/schema";
+import { auditLogs, stores } from "@/db/schema";
 import { parseListQuery } from "@/lib/api/query";
 import { requireAdmin } from "@/lib/authz/guard";
 import { formatDateTime, humanise } from "@/lib/format";
@@ -53,7 +53,7 @@ export default async function AdminAuditPage({
     );
   }
   if (query.filters.store) {
-    filters.push(eq(auditLogs.branch_id, query.filters.store));
+    filters.push(eq(auditLogs.store_id, query.filters.store));
   }
   if (query.filters.actor) {
     filters.push(eq(auditLogs.actor_type, query.filters.actor));
@@ -86,11 +86,11 @@ export default async function AdminAuditPage({
         ip: auditLogs.ip_address,
         payload: auditLogs.payload,
         createdAt: auditLogs.created_at,
-        storeId: auditLogs.branch_id,
-        storeName: branches.name,
+        storeId: auditLogs.store_id,
+        storeName: stores.name,
       })
       .from(auditLogs)
-      .leftJoin(branches, eq(branches.id, auditLogs.branch_id))
+      .leftJoin(stores, eq(stores.id, auditLogs.store_id))
       .where(where)
       .orderBy(desc(auditLogs.created_at))
       .limit(query.limit)
@@ -99,10 +99,10 @@ export default async function AdminAuditPage({
     db.select({ value: count() }).from(auditLogs).where(where),
 
     db
-      .select({ id: branches.id, name: branches.name })
-      .from(branches)
-      .where(eq(branches.tenant_id, ctx.business.id))
-      .orderBy(asc(branches.name)),
+      .select({ id: stores.id, name: stores.name })
+      .from(stores)
+      .where(eq(stores.tenant_id, ctx.business.id))
+      .orderBy(asc(stores.name)),
   ]);
 
   const total = Number(totalRow[0]?.value ?? 0);

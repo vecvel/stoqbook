@@ -34,6 +34,7 @@ import {
   pk,
   timestamps,
 } from "./_shared";
+import { stores } from "./organization";
 
 /* ------------------------------------------------------------------------- */
 /* The business — exactly one row per installation                           */
@@ -43,7 +44,7 @@ export const tenants = pgTable(
   "tenants",
   {
     id: pk(),
-    /** URL-safe handle, e.g. "freshmart". Informational in a single install. */
+    /** URL-safe handle, e.g. "mybusiness". Informational in a single install. */
     slug: text("slug").notNull(),
     name: text("name").notNull(),
     status: businessStatusEnum("status").notNull().default("created"),
@@ -218,6 +219,9 @@ export const licenses = pgTable(
     tenant_id: uuid("tenant_id")
       .notNull()
       .references(() => tenants.id, { onDelete: "cascade" }),
+    store_id: uuid("store_id")
+      .notNull()
+      .references(() => stores.id, { onDelete: "cascade" }),
     plan_id: uuid("plan_id")
       .notNull()
       .references(() => plans.id, { onDelete: "restrict" }),
@@ -250,15 +254,18 @@ export const licenses = pgTable(
       .default({}),
 
     notes: text("notes"),
-    /** Exactly one active licence per business, enforced in the service layer. */
+    /** Exactly one active licence per store, enforced in the service layer. */
     is_current: boolean("is_current").notNull().default(true),
 
     ...timestamps,
     ...actorColumns,
   },
   (t) => [
-    index("licenses_tenant_idx").on(t.tenant_id),
+    index("licenses_store_idx").on(t.store_id),
     index("licenses_status_idx").on(t.status),
+    uniqueIndex("licenses_store_current_idx")
+      .on(t.store_id)
+      .where(sql`${t.is_current} = true`),
   ],
 );
 
@@ -313,7 +320,7 @@ export const auditLogs = pgTable(
       onDelete: "cascade",
     }),
     /** Store the event belongs to, when store-scoped. */
-    branch_id: uuid("branch_id"),
+    store_id: uuid("store_id"),
 
     actor_id: uuid("actor_id"),
     actor_name: text("actor_name"),

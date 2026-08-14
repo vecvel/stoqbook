@@ -27,7 +27,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   purchaseOrderItems,
   purchaseOrders,
   suppliers,
@@ -59,7 +59,7 @@ export default async function PurchasesPage({
   const filters = [eq(purchaseOrders.tenant_id, ctx.business.id)];
 
   if (!seesAllStores(ctx) && ctx.activeStore) {
-    filters.push(eq(purchaseOrders.branch_id, ctx.activeStore.id));
+    filters.push(eq(purchaseOrders.store_id, ctx.activeStore.id));
   }
   if (query.search) {
     const term = `%${query.search}%`;
@@ -96,7 +96,7 @@ export default async function PurchasesPage({
         grandTotal: purchaseOrders.grand_total,
         supplierId: suppliers.id,
         supplierName: suppliers.company_name,
-        storeName: branches.name,
+        storeName: stores.name,
         createdByName: users.full_name,
         // Built through the query builder so the correlation to the outer row
         // is table-qualified; a bare sql`` fragment would not be.
@@ -115,7 +115,7 @@ export default async function PurchasesPage({
       })
       .from(purchaseOrders)
       .innerJoin(suppliers, eq(suppliers.id, purchaseOrders.supplier_id))
-      .innerJoin(branches, eq(branches.id, purchaseOrders.branch_id))
+      .innerJoin(stores, eq(stores.id, purchaseOrders.store_id))
       .leftJoin(users, eq(users.id, purchaseOrders.created_by))
       .where(where)
       .orderBy(desc(purchaseOrders.order_date))

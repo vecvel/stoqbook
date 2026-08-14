@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       employment_type: users.employment_type,
       department_id: users.department_id,
       designation_id: users.designation_id,
-      branch_id: users.branch_id,
+      store_id: users.store_id,
       joining_date: users.joining_date,
       last_login_at: users.last_login_at,
       created_at: users.created_at,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       employment_type: users.employment_type,
       department: users.department_id,
       designation: users.designation_id,
-      store: users.branch_id,
+      store: users.store_id,
     },
   });
 }

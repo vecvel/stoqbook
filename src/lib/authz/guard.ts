@@ -181,7 +181,7 @@ export async function requirePermission(
  *
  * Administrative permissions live in the same RBAC namespace as operational
  * ones (04-rbac.md) — the panel is gated by `admin.*` permissions, which only
- * the Owner role holds by default. The licence is not required to be valid,
+ * the Super Admin role holds by default. The licence is not required to be valid,
  * because renewing it is done from inside the panel.
  */
 export async function requireAdmin(

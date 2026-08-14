@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { warehouses } from "@/db/schema";
@@ -109,11 +109,11 @@ export async function convertToInvoice(
       .where(
         and(
           eq(warehouses.tenant_id, ctx.business.id),
-          eq(warehouses.branch_id, ctx.activeStore.id),
+          eq(warehouses.store_id, ctx.activeStore.id),
           eq(warehouses.is_active, true),
         ),
       )
-      .orderBy(warehouses.is_default)
+      .orderBy(asc(warehouses.sort_order))
       .limit(1);
 
     if (!warehouse) {

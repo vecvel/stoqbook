@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { db } from "@/db";
 import {
-  branches,
+  stores,
   purchaseOrders,
   purchaseReturns,
   suppliers,
@@ -60,12 +60,12 @@ export default async function PurchaseReturnsPage({
         supplierId: purchaseReturns.supplier_id,
         supplierName: suppliers.company_name,
         warehouseName: warehouses.name,
-        storeName: branches.name,
+        storeName: stores.name,
       })
       .from(purchaseReturns)
       .innerJoin(suppliers, eq(suppliers.id, purchaseReturns.supplier_id))
       .innerJoin(warehouses, eq(warehouses.id, purchaseReturns.warehouse_id))
-      .innerJoin(branches, eq(branches.id, purchaseReturns.branch_id))
+      .innerJoin(stores, eq(stores.id, purchaseReturns.store_id))
       .leftJoin(purchaseOrders, eq(purchaseOrders.id, purchaseReturns.order_id))
       .where(where)
       .orderBy(desc(purchaseReturns.return_date))

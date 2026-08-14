@@ -89,7 +89,7 @@ export async function checkIn(
   const values = {
     tenant_id: ctx.business.id,
     user_id: input.userId,
-    branch_id: ctx.activeStore?.id ?? null,
+    store_id: ctx.activeStore?.id ?? null,
     shift_id: input.shiftId ?? null,
     work_date: workDate,
     check_in: at,
@@ -206,7 +206,7 @@ export async function markAttendance(
   const values = {
     tenant_id: ctx.business.id,
     user_id: input.userId,
-    branch_id: ctx.activeStore?.id ?? null,
+    store_id: ctx.activeStore?.id ?? null,
     work_date: workDate,
     status: input.status,
     worked_minutes: input.workedMinutes ?? 0,

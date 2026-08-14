@@ -35,7 +35,7 @@ export default async function NewAdjustmentPage() {
   }
 
   return (
-    <div className="page max-w-6xl">
+    <div className="page">
       <PageHeader
         title="New stock adjustment"
         description="Correct a discrepancy between recorded and physical stock."
