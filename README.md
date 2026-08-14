@@ -15,6 +15,9 @@
 
 ---
 
+<img width="1669" height="851" alt="Screenshot 2026-08-14 at 12 01 38 PM" src="https://github.com/user-attachments/assets/9ef30760-6192-439c-a3cc-264e19acfc05" />
+
+
 ## 📖 Overview
 
 **StoqBook** is an enterprise-grade, modern retail operating system designed for multi-store inventory control, point of sale, purchasing workflows, employee management, and real-time business intelligence. Built with Next.js 16 (App Router), React 19, Drizzle ORM, and PostgreSQL, StoqBook delivers lighting-fast performance and seamless operational management.
