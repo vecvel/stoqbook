@@ -93,7 +93,7 @@ export function AppShell({
           type="button"
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-2.5 top-13 z-20 flex size-5 items-center justify-center rounded-full border border-shell-border bg-shell text-shell-foreground transition-colors hover:bg-shell-foreground/15"
+          className="absolute -right-2.5 top-13 z-20 flex size-5 items-center justify-center rounded-full border border-shell-border bg-shell text-shell-foreground transition-all hover:border-copper hover:text-copper shadow-xs cursor-pointer"
         >
           <ChevronLeft
             className={cn("size-3 transition-transform", collapsed && "rotate-180")}
