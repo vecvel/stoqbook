@@ -30,7 +30,7 @@ Examples of unacceptable behavior include:
 
 ## Enforcement Responsibilities
 
-The project maintainer, **besaoct**, is responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
+The project maintainer, **vecvel**, is responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
 
 The project maintainer has the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct, and will communicate reasons for enforcement decisions when appropriate.
 
@@ -44,7 +44,7 @@ This Code of Conduct applies within all project spaces, and also applies when an
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer **besaoct**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainer at [support@vecvel.com](mailto:support@vecvel.com). All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -56,5 +56,5 @@ This Code of Conduct is adapted from the [Contributor Covenant](https://www.cont
 
 ---
 
-**Project Owner & Maintainer:** [besaoct](https://github.com/besaoct)  
-**Copyright:** © 2026 besaoct. All Rights Reserved.
+**Project Owner & Maintainer:** [vecvel](https://github.com/vecvel)  
+**Copyright:** © 2026 vecvel. All Rights Reserved.

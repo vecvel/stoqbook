@@ -60,7 +60,7 @@
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/besaoct/stoqbook.git
+   git clone https://github.com/vecvel/stoqbook.git
    cd stoqbook
    ```
 
@@ -130,15 +130,16 @@ stoqbook/
 
 ## 🔒 Copyright & License
 
-**Copyright © 2026 besaoct. All Rights Reserved.**
+**Copyright © 2026 vecvel. All Rights Reserved.**
 
 This software is **proprietary** and strictly confidential. 
 
-- **No Public License**: No permission or license (personal, commercial, or modification) is granted without the explicit prior written consent of the author, **besaoct**.
+- **No Public License**: No permission or license (personal, commercial, or modification) is granted without the explicit prior written consent of the author, **vecvel**.
 - Please review the full terms in the [LICENSE](LICENSE) file before accessing or referencing this codebase.
+- For inquiries, licensing, or permissions: [support@vecvel.com](mailto:support@vecvel.com).
 
 ---
 
 <div align="center">
-  <sub>Developed & Maintained by <b><a href="https://github.com/besaoct">besaoct</a></b></sub>
+  <sub>Developed & Maintained by <b><a href="https://github.com/vecvel">vecvel</a></b></sub>
 </div>
